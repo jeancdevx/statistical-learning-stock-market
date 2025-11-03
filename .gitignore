@@ -1,0 +1,52 @@
+# Archivos de datos descargados
+/datasets/nyse/
+/datasets/archive/
+/datasets/processed/
+*.zip
+*.csv
+*.txt
+
+# Excepciones: mantener estructura
+!datasets/.gitkeep
+!datasets/DESCARGA_MANUAL.md
+
+# Reportes generados (opcional: comentar si quieres versionarlos)
+/reports/metrics/*.json
+/reports/metrics/*.csv
+/reports/figures/*.png
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.bak
