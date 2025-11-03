@@ -70,15 +70,18 @@ def construir_features(df):
     df['std_5'] = df['Close'].pct_change().rolling(window=5, min_periods=5).std()
     df['std_10'] = df['Close'].pct_change().rolling(window=10, min_periods=10).std()
     
-    # Rango relativo
-    df['range_rel'] = (df['High'] - df['Low']) / df['Close']
+    # Rango relativo (proteger contra división por cero)
+    df['range_rel'] = (df['High'] - df['Low']) / df['Close'].replace(0, np.nan)
     
-    # Volumen
+    # Volumen (proteger contra división por cero)
     df['vol_ma_10'] = df['Volume'].rolling(window=10, min_periods=10).mean()
-    df['vol_rel'] = df['Volume'] / df['vol_ma_10']
+    df['vol_rel'] = df['Volume'] / df['vol_ma_10'].replace(0, np.nan)
     
     # Día de la semana
     df['dow'] = df['Date'].dt.dayofweek
+    
+    # Reemplazar infinitos por NaN
+    df = df.replace([np.inf, -np.inf], np.nan)
     
     return df
 
