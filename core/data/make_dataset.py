@@ -1,27 +1,10 @@
-"""
-PASO 2: Construcción del Dataset de Modelado
-
-Procesa archivos NYSE de Stooq y genera dataset con:
-- Features técnicas (13 variables)
-- Etiqueta binaria: y_t+1 = 1[Open_t+1 > Close_t]
-- Columna split: train (75%) / val (10%) / test (15%)
-
-Salida: datasets/processed/dataset_modelado.csv
-"""
-
 import pandas as pd
 import numpy as np
 from pathlib import Path
 import warnings
 warnings.filterwarnings('ignore')
 
-
 def leer_archivo_stooq(file_path):
-    """
-    Lee un archivo .txt de Stooq y lo convierte a DataFrame estándar.
-    
-    Formato Stooq: <TICKER>,<PER>,<DATE>,<TIME>,<OPEN>,<HIGH>,<LOW>,<CLOSE>,<VOL>,<OPENINT>
-    """
     try:
         # Leer archivo
         df = pd.read_csv(file_path)
@@ -50,9 +33,6 @@ def leer_archivo_stooq(file_path):
 
 
 def construir_features(df):
-    """
-    Construye features técnicas usando SOLO información hasta t.
-    """
     # Retornos
     df['ret_cc_1'] = df['Close'].pct_change(1)
     df['ret_oo_1'] = df['Open'].pct_change(1)
