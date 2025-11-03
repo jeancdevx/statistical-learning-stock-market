@@ -4,7 +4,6 @@
 /datasets/processed/
 *.zip
 *.csv
-*.txt
 
 # Excepciones: mantener estructura
 !datasets/.gitkeep
