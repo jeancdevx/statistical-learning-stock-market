@@ -30,7 +30,17 @@ def main():
     print(f"Cargando dataset desde: {dataset_path}")
     print("(Esto puede tomar 1-2 minutos con 10M de registros...)")
     
-    df = pd.read_csv(dataset_path, parse_dates=['Date'])
+    # Carga optimizada con tipos de datos especificados
+    df = pd.read_csv(
+        dataset_path, 
+        parse_dates=['Date'],
+        dtype={
+            'Ticker': 'category',      # Ahorra memoria
+            'split': 'category',        # Ahorra memoria
+            'dow': 'int8',              # 0-4 cabe en int8
+            'target': 'int8'            # 0-1 cabe en int8
+        }
+    )
     
     print(f"✓ Dataset cargado: {len(df):,} registros")
     print()
@@ -64,7 +74,7 @@ def main():
     # Obtener modelos
     modelos = get_models()
     seed = 42
-    k_folds = 5
+    k_folds = 5  # Validación robusta con 5 folds (máxima precisión)
     
     # Entrenar y evaluar cada modelo
     for modelo_id, modelo_info in modelos.items():
