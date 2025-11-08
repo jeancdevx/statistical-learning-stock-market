@@ -5,7 +5,15 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 
-def guardar_matriz_confusion(cm, modelo_nombre, output_dir):
+def guardar_matriz_confusion(cm, nombre_modelo, ruta):
+    """
+    Guarda la matriz de confusión como imagen PNG.
+    
+    Args:
+        cm: Matriz de confusión (array 2x2)
+        nombre_modelo: Nombre del modelo para el título
+        ruta: Path completo donde guardar la imagen (incluyendo nombre del archivo)
+    """
     fig, ax = plt.subplots(figsize=(8, 6))
     
     # Dibujar matriz
@@ -20,7 +28,7 @@ def guardar_matriz_confusion(cm, modelo_nombre, output_dir):
            yticklabels=classes,
            ylabel='Clase Real',
            xlabel='Clase Predicha',
-           title=f'Matriz de Confusión - {modelo_nombre}')
+           title=f'Matriz de Confusión - {nombre_modelo}')
     
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
     
@@ -35,9 +43,11 @@ def guardar_matriz_confusion(cm, modelo_nombre, output_dir):
     
     fig.tight_layout()
     
-    # Guardar
-    output_path = Path(output_dir) / f"confusion_matrix_{modelo_nombre.lower().replace(' ', '_')}.png"
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    # Guardar (ruta ya viene completa con el nombre del archivo)
+    ruta = Path(ruta)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(ruta, dpi=150, bbox_inches='tight')
     plt.close()
     
-    print(f"  ✓ Guardado: {output_path}")
+    print(f"  ✓ Guardado: {ruta}")
+
