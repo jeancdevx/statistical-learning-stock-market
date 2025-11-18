@@ -6,23 +6,17 @@ warnings.filterwarnings('ignore')
 
 def leer_archivo_stooq(file_path):
     try:
-        # Leer archivo
         df = pd.read_csv(file_path)
         
-        # Renombrar columnas (quitar <>)
         df.columns = df.columns.str.replace('<', '').str.replace('>', '')
         
-        # Convertir fecha (formato YYYYMMDD -> datetime)
         df['DATE'] = pd.to_datetime(df['DATE'], format='%Y%m%d')
         
-        # Seleccionar y renombrar columnas necesarias
         df = df[['TICKER', 'DATE', 'OPEN', 'HIGH', 'LOW', 'CLOSE', 'VOL']].copy()
         df.columns = ['Ticker', 'Date', 'Open', 'High', 'Low', 'Close', 'Volume']
         
-        # Extraer solo el símbolo (quitar .US)
         df['Ticker'] = df['Ticker'].str.replace('.US', '')
         
-        # Ordenar por fecha
         df = df.sort_values('Date').reset_index(drop=True)
         
         return df
@@ -33,51 +27,37 @@ def leer_archivo_stooq(file_path):
 
 
 def construir_features(df):
-    # Retornos
     df['ret_cc_1'] = df['Close'].pct_change(1)
     df['ret_oo_1'] = df['Open'].pct_change(1)
     df['ret_co_1'] = (df['Open'] - df['Close'].shift(1)) / df['Close'].shift(1)
     
-    # Medias móviles
     df['sma_5'] = df['Close'].rolling(window=5, min_periods=5).mean()
     df['sma_10'] = df['Close'].rolling(window=10, min_periods=10).mean()
     df['ema_10'] = df['Close'].ewm(span=10, adjust=False, min_periods=10).mean()
     
-    # Momentum
     df['mom_5'] = df['Close'] - df['Close'].shift(5)
     
-    # Volatilidad
     df['std_5'] = df['Close'].pct_change().rolling(window=5, min_periods=5).std()
     df['std_10'] = df['Close'].pct_change().rolling(window=10, min_periods=10).std()
     
-    # Rango relativo (proteger contra división por cero)
     df['range_rel'] = (df['High'] - df['Low']) / df['Close'].replace(0, np.nan)
     
-    # Volumen (proteger contra división por cero)
     df['vol_ma_10'] = df['Volume'].rolling(window=10, min_periods=10).mean()
     df['vol_rel'] = df['Volume'] / df['vol_ma_10'].replace(0, np.nan)
     
-    # Día de la semana
     df['dow'] = df['Date'].dt.dayofweek
     
-    # Reemplazar infinitos por NaN
     df = df.replace([np.inf, -np.inf], np.nan)
     
     return df
 
 
 def construir_etiqueta(df):
-    """
-    Etiqueta: y_t+1 = 1 si Open_t+1 > Close_t, sino 0
-    """
     df['target'] = (df['Open'].shift(-1) > df['Close']).astype(int)
     return df
 
 
 def split_temporal(df, train_pct=0.75, val_pct=0.10, test_pct=0.15):
-    """
-    Realiza split temporal por ticker: 75% train / 10% val / 15% test.
-    """
     df['split'] = ''
     
     for ticker in df['Ticker'].unique():
@@ -102,7 +82,6 @@ def main():
     print("="*60)
     print()
     
-    # Ruta a archivos NYSE
     nyse_path = Path("datasets/nyse/data/daily/us/nyse stocks")
     
     if not nyse_path.exists():
@@ -110,15 +89,13 @@ def main():
         print("  Ejecuta primero: python verificar_dataset.py")
         return
     
-    # Obtener lista de archivos
     archivos = list(nyse_path.rglob("*.txt"))
     print(f"Archivos encontrados: {len(archivos)}")
     print()
     
-    # Procesar cada ticker
     print("Procesando tickers...")
     datos_procesados = []
-    min_registros = 300  # Mínimo de días históricos
+    min_registros = 300
     
     for i, archivo in enumerate(archivos, 1):
         if i % 500 == 0:
@@ -129,13 +106,10 @@ def main():
         if df is None or len(df) < min_registros:
             continue
         
-        # Construir features
         df = construir_features(df)
         
-        # Construir etiqueta
         df = construir_etiqueta(df)
         
-        # Eliminar filas con NaN (warm-up de ventanas)
         df_clean = df.dropna()
         
         if len(df_clean) > 0:
@@ -148,7 +122,6 @@ def main():
         print("✗ Error: No se pudo procesar ningún ticker")
         return
     
-    # Consolidar
     print("Consolidando dataset...")
     dataset = pd.concat(datos_procesados, ignore_index=True)
     dataset = dataset.sort_values(['Ticker', 'Date']).reset_index(drop=True)
@@ -156,11 +129,9 @@ def main():
     print(f"✓ Dataset consolidado: {len(dataset):,} registros")
     print()
     
-    # Realizar split temporal
     print("Realizando split temporal 75% / 10% / 15%...")
     dataset = split_temporal(dataset)
     
-    # Estadísticas
     print()
     print("="*60)
     print("RESUMEN DEL DATASET")
@@ -193,7 +164,6 @@ def main():
         print(f"  Clase {clase}: {n:8,} ({pct:5.2f}%)")
     print()
     
-    # Guardar
     output_path = Path("datasets/processed/dataset_modelado.csv")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -204,7 +174,6 @@ def main():
     print(f"  Tamaño: {size_mb:.1f} MB")
     print()
     
-    # Mostrar ejemplo
     print("="*60)
     print("EJEMPLO DE DATOS (primeras 3 filas)")
     print("="*60)

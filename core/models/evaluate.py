@@ -1,10 +1,3 @@
-"""
-Módulo de evaluación en conjunto de test.
-
-Implementa la evaluación final del modelo en el conjunto de test (15%),
-reentrenando previamente en el conjunto completo train+val (85%).
-"""
-
 import numpy as np
 import pandas as pd
 from typing import Tuple, Dict
@@ -26,33 +19,10 @@ def evaluar_en_test(
     test_df: pd.DataFrame,
     features: list
 ) -> Tuple[Dict, np.ndarray]:
-    """
-    Evalúa el modelo en el conjunto de test.
-    
-    Reentrena el modelo en train+val (85%) y evalúa en test (15%).
-    Esto maximiza el uso de datos históricos para el modelo final.
-    
-    Args:
-        model: Instancia del modelo (debe heredar de BaseModel)
-        train_val_df: DataFrame combinado de train + val (85%)
-        test_df: DataFrame de test (15%)
-        features: Lista de nombres de features a usar
-        
-    Returns:
-        Tupla de (metricas, confusion_matrix):
-            - metricas: Diccionario con todas las métricas de evaluación
-            - confusion_matrix: Matriz de confusión (array 2x2)
-            
-    Example:
-        >>> from core.models import RandomForestModel
-        >>> model = RandomForestModel()
-        >>> metrics, cm = evaluar_en_test(model, train_val_df, test_df, features)
-    """
     print(f"\n{'='*60}")
     print(f"Evaluación en Test: {model.name}")
     print(f"{'='*60}")
     
-    # Extraer features y target
     X_train_val = train_val_df[features]
     y_train_val = train_val_df['target']
     X_test = test_df[features]
@@ -60,18 +30,13 @@ def evaluar_en_test(
     
     print(f"  Reentrenando en {len(train_val_df):,} ejemplos (85%)...")
     
-    # Entrenar el modelo en train+val completo
-    # Nota: El modelo aplica scaling internamente si requires_scaling=True
     model.fit(X_train_val, y_train_val)
     
-    # Realizar predicciones en test
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
     
-    # Calcular matriz de confusión
     cm = confusion_matrix(y_test, y_pred)
     
-    # Calcular todas las métricas
     metricas = {
         'accuracy': float(accuracy_score(y_test, y_pred)),
         'balanced_accuracy': float(balanced_accuracy_score(y_test, y_pred)),
@@ -89,7 +54,6 @@ def evaluar_en_test(
         }
     }
     
-    # Imprimir resultados
     print(f"\n  Evaluando en {len(test_df):,} ejemplos (15%)...")
     print(f"    Accuracy:          {metricas['accuracy']:.4f}")
     print(f"    Balanced Accuracy: {metricas['balanced_accuracy']:.4f}")

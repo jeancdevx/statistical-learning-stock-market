@@ -1,10 +1,3 @@
-"""
-Pipeline principal de entrenamiento y evaluación de modelos.
-
-Este módulo orquesta todo el flujo de trabajo: carga de datos, validación,
-entrenamiento, evaluación y generación de reportes.
-"""
-
 import pandas as pd
 import json
 from pathlib import Path
@@ -18,7 +11,6 @@ from core.models.evaluate import evaluar_en_test
 from core.utils.visualization import guardar_matriz_confusion
 
 
-# Configurar logging
 logging.basicConfig(
     level=Settings.LOG_LEVEL,
     format=Settings.LOG_FORMAT
@@ -27,55 +19,27 @@ logger = logging.getLogger(__name__)
 
 
 class TrainingPipeline:
-    """
-    Pipeline completo de entrenamiento y evaluación.
-    
-    Este pipeline orquesta todas las fases del proyecto:
-    1. Carga de datos
-    2. Validación cruzada walk-forward
-    3. Evaluación en test
-    4. Generación de reportes y visualizaciones
-    """
-    
     def __init__(self, models_to_train: Optional[List[str]] = None):
-        """
-        Inicializa el pipeline.
-        
-        Args:
-            models_to_train: Lista de nombres de modelos a entrenar.
-                           Si None, entrena todos los modelos disponibles.
-        """
         self.models_to_train = models_to_train or ModelFactory.get_available_models()
         self.results = {}
         
-        # Crear directorios necesarios
         Settings.create_directories()
         
         logger.info(f"Pipeline inicializado con modelos: {self.models_to_train}")
     
     def load_data(self) -> tuple:
-        """
-        Carga el dataset y realiza división temporal.
-        
-        Returns:
-            Tupla de (train_df, val_df, test_df, train_val_df)
-        """
         logger.info(f"Cargando dataset desde: {Settings.DATASET_PATH}")
         
         if not Settings.DATASET_PATH.exists():
             raise FileNotFoundError(
                 f"Dataset no encontrado en: {Settings.DATASET_PATH}\n"
-                "Ejecuta primero core/data/make_dataset.py"
             )
         
-        # Cargar dataset
         df = pd.read_csv(Settings.DATASET_PATH, parse_dates=['Date'])
         logger.info(f"Dataset cargado: {len(df):,} registros, {len(df['Ticker'].unique())} tickers")
         
-        # Ordenar cronológicamente
         df = df.sort_values(['Ticker', 'Date']).reset_index(drop=True)
         
-        # División temporal
         n = len(df)
         train_end = int(n * Settings.TRAIN_SPLIT)
         val_end = int(n * (Settings.TRAIN_SPLIT + Settings.VAL_SPLIT))
@@ -100,30 +64,14 @@ class TrainingPipeline:
         test_df: pd.DataFrame,
         train_val_df: pd.DataFrame
     ) -> dict:
-        """
-        Entrena y evalúa un modelo específico.
-        
-        Args:
-            model_name: Nombre del modelo a entrenar
-            train_df: DataFrame de entrenamiento
-            val_df: DataFrame de validación
-            test_df: DataFrame de test
-            train_val_df: DataFrame combinado train+val
-            
-        Returns:
-            Diccionario con resultados del modelo
-        """
         logger.info(f"\n{'='*70}")
         logger.info(f"INICIANDO: {model_name.upper()}")
         logger.info(f"{'='*70}")
         
-        # Crear modelo usando factory
         model = ModelFactory.create_model(model_name)
         
-        # Obtener rutas de salida
         output_paths = Settings.get_output_paths(model_name)
         
-        # 1. Validación cruzada walk-forward
         logger.info(f"\nFase 1: Validación Walk-Forward (k={Settings.K_FOLDS})")
         metricas_folds, metricas_promedio = validacion_walk_forward(
             model=model,
@@ -133,12 +81,10 @@ class TrainingPipeline:
             k=Settings.K_FOLDS
         )
         
-        # Guardar métricas de validación
         val_df_metrics = pd.DataFrame(metricas_folds)
         val_df_metrics.to_csv(output_paths['val_metrics'], index=False)
         logger.info(f"  ✓ Métricas de validación guardadas en: {output_paths['val_metrics']}")
         
-        # 2. Evaluación en test
         logger.info(f"\nFase 2: Evaluación en Test")
         metricas_test, cm = evaluar_en_test(
             model=model,
@@ -147,12 +93,10 @@ class TrainingPipeline:
             features=Settings.FEATURES
         )
         
-        # Guardar métricas de test
         with open(output_paths['test_metrics'], 'w') as f:
             json.dump(metricas_test, f, indent=2)
         logger.info(f"  ✓ Métricas de test guardadas en: {output_paths['test_metrics']}")
         
-        # 3. Guardar matriz de confusión
         logger.info(f"\nFase 3: Generación de Visualizaciones")
         guardar_matriz_confusion(
             cm=cm,
@@ -161,11 +105,9 @@ class TrainingPipeline:
         )
         logger.info(f"  ✓ Matriz de confusión guardada en: {output_paths['confusion_matrix']}")
         
-        # 4. Guardar modelo entrenado
         model.save_model(output_paths['model_file'])
         logger.info(f"  ✓ Modelo guardado en: {output_paths['model_file']}")
         
-        # Compilar resultados
         results = {
             'model_name': model.name,
             'model_short_name': model_name,
@@ -187,20 +129,12 @@ class TrainingPipeline:
         return results
     
     def run(self) -> dict:
-        """
-        Ejecuta el pipeline completo.
-        
-        Returns:
-            Diccionario con resultados de todos los modelos
-        """
         logger.info("\n" + "="*70)
         logger.info("PIPELINE DE ENTRENAMIENTO INICIADO")
         logger.info("="*70)
         
-        # Cargar datos
         train_df, val_df, test_df, train_val_df = self.load_data()
         
-        # Entrenar cada modelo
         for model_name in self.models_to_train:
             try:
                 results = self.train_and_evaluate_model(
@@ -216,18 +150,15 @@ class TrainingPipeline:
                 logger.error(f"Error al entrenar {model_name}: {str(e)}", exc_info=True)
                 self.results[model_name] = {'error': str(e)}
         
-        # Generar resumen final
         self._print_final_summary()
         
         return self.results
     
     def _print_final_summary(self):
-        """Imprime un resumen comparativo de todos los modelos."""
         logger.info("\n" + "="*70)
         logger.info("RESUMEN FINAL - COMPARACIÓN DE MODELOS")
         logger.info("="*70)
         
-        # Extraer métricas de test para comparación
         comparison = []
         for model_name, results in self.results.items():
             if 'error' not in results:
@@ -240,22 +171,18 @@ class TrainingPipeline:
                 })
         
         if comparison:
-            # Crear DataFrame para comparación
             df_comparison = pd.DataFrame(comparison)
             df_comparison = df_comparison.sort_values('ROC-AUC', ascending=False)
             
-            # Imprimir tabla
             logger.info("\nMétricas en conjunto de test (ordenado por ROC-AUC):")
             logger.info("")
             logger.info(df_comparison.to_string(index=False, float_format='%.4f'))
             
-            # Identificar mejor modelo
             best_model = df_comparison.iloc[0]
             logger.info(f"\n🏆 MEJOR MODELO: {best_model['Modelo']}")
             logger.info(f"   ROC-AUC: {best_model['ROC-AUC']:.4f}")
             logger.info(f"   Accuracy: {best_model['Accuracy']:.4f}")
             
-            # Guardar comparación
             comparison_path = Settings.METRICS_DIR / "models_comparison.csv"
             df_comparison.to_csv(comparison_path, index=False)
             logger.info(f"\n✓ Comparación guardada en: {comparison_path}")
