@@ -1,0 +1,333 @@
+type: collection.insomnia.rest/5.0
+name: NYSE Stock Predictor API
+meta:
+  id: wrk_nyse_predictor_api
+  created: 1731931200000
+  modified: 1731931200000
+  description: "API para predicciones de acciones del NYSE usando modelos de Machine Learning"
+collection:
+  - name: health
+    meta:
+      id: fld_health_check
+      created: 1731931200001
+      modified: 1731931200001
+      sortKey: -1731931200001
+      description: "Health check del API"
+    children:
+      - url: "{{ _.base_url }}/health"
+        name: health check
+        meta:
+          id: req_health_check
+          created: 1731931200002
+          modified: 1731931200002
+          isPrivate: false
+          description: "Verifica que el API esté funcionando correctamente"
+          sortKey: -1731931200002
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: tickers
+    meta:
+      id: fld_tickers
+      created: 1731931200003
+      modified: 1731931200003
+      sortKey: -1731931200003
+      description: "Endpoints relacionados con tickers disponibles"
+    children:
+      - url: "{{ _.base_url }}/api/v1/tickers"
+        name: listar todos los tickers
+        meta:
+          id: req_list_tickers
+          created: 1731931200004
+          modified: 1731931200004
+          isPrivate: false
+          description: "Obtiene la lista completa de tickers disponibles en el dataset"
+          sortKey: -1731931200004
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/api/v1/tickers/{{ _.ticker }}/dates"
+        name: obtener rango de fechas por ticker
+        meta:
+          id: req_ticker_dates
+          created: 1731931200005
+          modified: 1731931200005
+          isPrivate: false
+          description: "Obtiene el rango de fechas disponibles para un ticker específico"
+          sortKey: -1731931200005
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: models
+    meta:
+      id: fld_models
+      created: 1731931200006
+      modified: 1731931200006
+      sortKey: -1731931200006
+      description: "Endpoints relacionados con modelos disponibles"
+    children:
+      - url: "{{ _.base_url }}/api/v1/models"
+        name: listar modelos disponibles
+        meta:
+          id: req_list_models
+          created: 1731931200007
+          modified: 1731931200007
+          isPrivate: false
+          description: "Obtiene la lista de modelos ML disponibles (Random Forest, Logistic Regression, SVM)"
+          sortKey: -1731931200007
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: predictions
+    meta:
+      id: fld_predictions
+      created: 1731931200008
+      modified: 1731931200008
+      sortKey: -1731931200008
+      description: "Endpoints para realizar predicciones"
+    children:
+      - url: "{{ _.base_url }}/api/v1/predict"
+        name: prediccion simple - ultimo dato
+        meta:
+          id: req_predict_simple
+          created: 1731931200009
+          modified: 1731931200009
+          isPrivate: false
+          description: "Realiza una predicción para el último dato disponible de un ticker"
+          sortKey: -1731931200009
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ticker": "{{ _.ticker }}",
+              "model": "{{ _.model }}"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/api/v1/backtest"
+        name: prediccion con validacion - fecha historica
+        meta:
+          id: req_predict_backtest
+          created: 1731931200010
+          modified: 1731931200010
+          isPrivate: false
+          description: "Realiza una predicción para una fecha histórica y compara con el resultado real"
+          sortKey: -1731931200010
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ticker": "{{ _.ticker }}",
+              "date": "{{ _.test_date }}",
+              "model": "{{ _.model }}"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: examples
+    meta:
+      id: fld_examples
+      created: 1731931200011
+      modified: 1731931200011
+      sortKey: -1731931200011
+      description: "Ejemplos de uso con valores reales"
+    children:
+      - url: "{{ _.base_url }}/api/v1/predict"
+        name: ejemplo - Apple (AAPL) con Random Forest
+        meta:
+          id: req_example_aapl_rf
+          created: 1731931200012
+          modified: 1731931200012
+          isPrivate: false
+          description: "Predicción para Apple usando Random Forest"
+          sortKey: -1731931200012
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ticker": "aapl",
+              "model": "rf"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/api/v1/predict"
+        name: ejemplo - Microsoft (MSFT) con Logistic Regression
+        meta:
+          id: req_example_msft_logreg
+          created: 1731931200013
+          modified: 1731931200013
+          isPrivate: false
+          description: "Predicción para Microsoft usando Regresión Logística"
+          sortKey: -1731931200013
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ticker": "msft",
+              "model": "logreg"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/api/v1/predict"
+        name: ejemplo - Tesla (TSLA) con SVM
+        meta:
+          id: req_example_tsla_svm
+          created: 1731931200014
+          modified: 1731931200014
+          isPrivate: false
+          description: "Predicción para Tesla usando SVM"
+          sortKey: -1731931200014
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ticker": "tsla",
+              "model": "svm"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.base_url }}/api/v1/backtest"
+        name: ejemplo - backtest Amazon octubre 2025
+        meta:
+          id: req_example_backtest_amzn
+          created: 1731931200015
+          modified: 1731931200015
+          isPrivate: false
+          description: "Backtest para Amazon en fecha histórica específica"
+          sortKey: -1731931200015
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "ticker": "amzn",
+              "date": "2025-10-15",
+              "model": "rf"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_nyse_predictor
+    created: 1731931200016
+    modified: 1731931200016
+environments:
+  name: Base Environment
+  meta:
+    id: env_nyse_base
+    created: 1731931200017
+    modified: 1731931200017
+    isPrivate: false
+  data:
+    base_url: http://localhost:8000
+    ticker: aapl
+    model: rf
+    test_date: "2025-10-15"
+  subEnvironments:
+    - name: Local Development
+      meta:
+        id: env_nyse_local
+        created: 1731931200018
+        modified: 1731931200018
+        isPrivate: false
+        sortKey: 1731931200018
+      data:
+        base_url: http://localhost:8000
+        ticker: aapl
+        model: rf
+        test_date: "2025-10-15"
+    - name: Production (Railway/Render)
+      meta:
+        id: env_nyse_prod
+        created: 1731931200019
+        modified: 1731931200019
+        isPrivate: false
+        sortKey: 1731931200019
+      data:
+        base_url: https://your-production-url.railway.app
+        ticker: aapl
+        model: rf
+        test_date: "2025-10-15"
