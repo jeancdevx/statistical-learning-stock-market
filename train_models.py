@@ -1,25 +1,7 @@
-"""
-Script principal de entrenamiento de modelos.
-
-Este es el punto de entrada para entrenar y evaluar todos los modelos
-del proyecto de predicción de precios de acciones NYSE.
-
-Uso:
-    # Entrenar todos los modelos
-    python train_models.py
-    
-    # Entrenar modelos específicos
-    python train_models.py --models logreg rf
-    
-    # Ver ayuda
-    python train_models.py --help
-"""
-
 import argparse
 import sys
 from pathlib import Path
 
-# Agregar directorio raíz al path
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -29,7 +11,6 @@ from core.config.settings import Settings
 
 
 def parse_arguments():
-    """Parsea argumentos de línea de comandos."""
     parser = argparse.ArgumentParser(
         description='Entrena y evalúa modelos de clasificación para predicción de precios de acciones NYSE',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -76,11 +57,8 @@ Modelos disponibles:
 
 
 def main():
-    """Función principal."""
-    # Parsear argumentos
     args = parse_arguments()
     
-    # Banner de inicio
     print("\n" + "="*70)
     print(" "*15 + "PROYECTO: PREDICCIÓN NYSE")
     print(" "*10 + "Modelado de Dirección de Precio Overnight")
@@ -95,19 +73,16 @@ def main():
     print(f"  Paralelismo: {Settings.N_JOBS} cores")
     print("="*70 + "\n")
     
-    # Actualizar configuración si se proporcionaron argumentos
     if args.dataset != Settings.DATASET_PATH:
         Settings.DATASET_PATH = args.dataset
     
     if args.k_folds != Settings.K_FOLDS:
         Settings.K_FOLDS = args.k_folds
     
-    # Crear y ejecutar pipeline
     try:
         pipeline = TrainingPipeline(models_to_train=args.models)
         results = pipeline.run()
         
-        # Verificar si hubo errores
         errors = [name for name, res in results.items() if 'error' in res]
         if errors:
             print(f"\n⚠️  ADVERTENCIA: {len(errors)} modelo(s) fallaron:")

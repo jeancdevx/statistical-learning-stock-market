@@ -4,7 +4,6 @@ from pathlib import Path
 def main():
     print("=== Verificación del Dataset NYSE (Stooq) ===\n")
     
-    # Ruta a los datos de NYSE stocks
     nyse_path = Path("datasets/nyse/data/daily/us/nyse stocks")
     
     if not nyse_path.exists():
@@ -12,7 +11,6 @@ def main():
         print("  Asegúrate de haber extraído d_us_txt.zip en datasets/nyse/")
         return
     
-    # Contar archivos
     archivos = list(nyse_path.rglob("*.txt"))
     print(f"Archivos encontrados: {len(archivos)}")
     
@@ -20,7 +18,6 @@ def main():
         print("✗ No se encontraron archivos .txt")
         return
     
-    # Examinar un archivo de ejemplo
     archivo_ejemplo = archivos[0]
     print(f"\nArchivo de ejemplo: {archivo_ejemplo.name}")
     
