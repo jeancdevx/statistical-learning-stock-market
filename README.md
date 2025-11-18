@@ -106,6 +106,11 @@ Esto instalará:
 - `numpy==2.1.3` - Operaciones numéricas
 - `scikit-learn==1.5.2` - Algoritmos de ML y métricas
 - `matplotlib==3.9.2` - Visualizaciones
+- `pyarrow==18.1.0` - Soporte para formato Parquet (optimización de carga)
+- `fastapi==0.104.1` - Framework web para API REST
+- `uvicorn[standard]==0.24.0` - Servidor ASGI
+- `python-multipart==0.0.6` - Manejo de formularios multipart
+- `pydantic==2.5.0` - Validación de datos
 
 **Verificar instalación**:
 ```bash
@@ -270,9 +275,53 @@ ls -lh datasets/processed/dataset_modelado.csv
 
 Deberías ver un archivo de aproximadamente **2.8 GB**.
 
+### **⚡ Optimización con Parquet (Recomendado)**
+
+Para mejorar drásticamente el rendimiento de carga del dataset (de 30s a 2-3s), convierte el CSV a formato Parquet:
+
+**Ejecutar una sola vez**:
+
+```bash
+python convert_to_parquet.py
+```
+
+**Salida esperada**:
+```
+📄 Leyendo CSV: datasets\processed\dataset_modelado.csv
+   Tamaño: 2832.86 MB
+✓ CSV cargado en 27.88 segundos
+   Registros: 10,374,544
+
+💾 Guardando Parquet: datasets\processed\dataset_modelado.parquet
+✓ Parquet guardado en 6.49 segundos
+   Tamaño: 1210.41 MB
+
+🚀 Probando velocidad de carga Parquet...
+✓ Parquet cargado en 2.46 segundos
+
+📊 Mejora de velocidad: 11.3x más rápido
+   CSV:     27.88s
+   Parquet: 2.46s
+
+💽 Comparación de tamaño:
+   CSV:     2832.86 MB
+   Parquet: 1210.41 MB (57.3% más pequeño)
+
+✅ Conversión completada exitosamente!
+```
+
+**Beneficios del formato Parquet**:
+- ⚡ **11.3x más rápido**: 2.5s vs 30s de carga
+- 💾 **57% más pequeño**: 1.2 GB vs 2.8 GB
+- 🔧 **Tipos preservados**: No requiere conversión de dtypes
+- 📦 **Compresión automática**: Snappy compression
+- 🚀 **Optimizado para Big Data**: Formato columnar usado en producción
+
+El sistema detecta automáticamente si existe el archivo Parquet y lo usa preferentemente. Si no existe, usa el CSV como fallback.
+
 ## 🎯 Entrenamiento de Modelos
 
-Una vez que tengas el dataset procesado, puedes entrenar los modelos.
+Una vez que tengas el dataset procesado (y opcionalmente convertido a Parquet), puedes entrenar los modelos.
 
 ### **Comando Principal**
 
