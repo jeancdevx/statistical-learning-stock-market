@@ -28,14 +28,22 @@ class TrainingPipeline:
         logger.info(f"Pipeline inicializado con modelos: {self.models_to_train}")
     
     def load_data(self) -> tuple:
-        logger.info(f"Cargando dataset desde: {Settings.DATASET_PATH}")
+        parquet_path = Settings.DATASET_PATH.parent / "dataset_modelado.parquet"
         
-        if not Settings.DATASET_PATH.exists():
+        if parquet_path.exists():
+            logger.info(f"Cargando dataset desde Parquet (optimizado): {parquet_path}")
+            df = pd.read_parquet(parquet_path)
+        elif Settings.DATASET_PATH.exists():
+            logger.info(f"Cargando dataset desde CSV: {Settings.DATASET_PATH}")
+            logger.info("Tip: Ejecuta 'python convert_to_parquet.py' para optimizar la carga")
+            df = pd.read_csv(Settings.DATASET_PATH, parse_dates=['Date'])
+        else:
             raise FileNotFoundError(
-                f"Dataset no encontrado en: {Settings.DATASET_PATH}\n"
+                f"Dataset no encontrado en:\n"
+                f"  - {parquet_path}\n"
+                f"  - {Settings.DATASET_PATH}\n"
             )
         
-        df = pd.read_csv(Settings.DATASET_PATH, parse_dates=['Date'])
         logger.info(f"Dataset cargado: {len(df):,} registros, {len(df['Ticker'].unique())} tickers")
         
         df = df.sort_values(['Ticker', 'Date']).reset_index(drop=True)
