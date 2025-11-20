@@ -4,6 +4,7 @@
 /datasets/processed/
 *.zip
 *.csv
+*.parquet
 
 # Excepciones: mantener estructura
 !datasets/.gitkeep
