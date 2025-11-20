@@ -578,7 +578,8 @@ proyecto/
 │   │           ├── aa.us.txt
 │   │           └── ...
 │   └── processed/                    # Datos procesados
-│       └── dataset_modelado.csv      # 💾 2.8 GB - 10.4M registros
+│       ├── dataset_modelado.csv      # 💾 2.8 GB - 10.4M registros (CSV)
+│       └── dataset_modelado.parquet  # ⚡ 1.2 GB - 10.4M registros (Parquet, 11x más rápido)
 │
 ├── core/                              # 🧠 Código principal
 │   ├── config/                       # Configuración
@@ -587,6 +588,7 @@ proyecto/
 │   │
 │   ├── data/                         # Construcción de datos
 │   │   └── make_dataset.py           # 🔨 Genera dataset_modelado.csv
+├── convert_to_parquet.py              # ⚡ Convierte CSV a Parquet (opcional)
 │   │
 │   ├── models/                       # Modelos y evaluación
 │   │   ├── __init__.py
