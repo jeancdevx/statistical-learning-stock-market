@@ -1,8 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from app.api.routes import predict
 from app.config import CORS_ORIGINS
+from pathlib import Path
 import logging
 
 logging.basicConfig(
@@ -29,10 +31,12 @@ app.add_middleware(
 
 app.include_router(predict.router)
 
+app.mount("/js", StaticFiles(directory="app/frontend/js"), name="js")
 
 @app.get("/", include_in_schema=False)
 async def root():
-    return RedirectResponse(url="/docs")
+    """Serve the frontend application"""
+    return FileResponse("app/frontend/index.html")
 
 @app.get("/health")
 async def health_check():
@@ -48,7 +52,8 @@ async def startup_event():
     logger.info("🚀 NYSE Stock Predictor API iniciando...")
     logger.info("=" * 60)
     logger.info("📊 Versión: 1.0.0")
-    logger.info("🔗 Docs: http://localhost:8000/docs")
+    logger.info("🌐 App: http://localhost:8000")
+    logger.info("📚 API Docs: http://localhost:8000/docs")
     logger.info("=" * 60)
     
     logger.info("📦 Pre-cargando dataset...")
