@@ -24,7 +24,7 @@ class BacktestRequest(BaseModel):
 
 @router.post("/predict")
 async def predict(request: PredictRequest):
-    result = prediction_service.predict(request.ticker, request.model)
+    result = prediction_service.predict_future(request.ticker, request.model)
     
     if result.get('error'):
         raise HTTPException(status_code=404, detail=result['message'])
@@ -63,6 +63,14 @@ async def get_ticker_dates(ticker: str):
         raise HTTPException(status_code=404, detail=dates['message'])
     
     return dates
+
+@router.get("/tickers/{ticker}/history")
+async def get_ticker_history(ticker: str, days: int = 30):
+    try:
+        history = data_service.get_ticker_history(ticker, days)
+        return history
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/models")
 async def get_models():
