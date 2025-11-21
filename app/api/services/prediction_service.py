@@ -15,7 +15,7 @@ class PredictionService:
         self.data_service = data_service or DataService()
         self.feature_columns = FEATURE_COLUMNS
     
-    def predict(self, ticker: str, model_name: str = "rf") -> Dict:
+    def predict_future(self, ticker: str, model_name: str = "rf") -> Dict:
         try:
             model_data = self.model_loader.load_model(model_name)
             model = model_data['model']
@@ -38,6 +38,8 @@ class PredictionService:
             
             confidence = self._get_confidence_level(probability)
             
+            feature_dict = {name: float(features[0][i]) for i, name in enumerate(model_data.get('feature_names', []))}
+            
             return {
                 'error': False,
                 'ticker': ticker,
@@ -52,7 +54,14 @@ class PredictionService:
                     'data_until': last_date.strftime('%Y-%m-%d'),
                     'predicting_for': next_date.strftime('%Y-%m-%d')
                 },
-                'last_close': float(last_row['Close'])
+                'last_close': float(last_row['Close']),
+                'features': feature_dict,
+                'prices': {
+                    'open': float(last_row['Open']),
+                    'high': float(last_row['High']),
+                    'low': float(last_row['Low']),
+                    'close': float(last_row['Close'])
+                }
             }
             
         except FileNotFoundError as e:
@@ -83,6 +92,8 @@ class PredictionService:
             prediction = model.predict(features)[0]
             probability = model.predict_proba(features)[0][1]
             
+            feature_dict = {name: float(features[0][i]) for i, name in enumerate(model_data.get('feature_names', []))}
+            
             next_day = self.data_service.get_next_day(ticker, date)
             
             if next_day is None:
@@ -91,11 +102,16 @@ class PredictionService:
                     'ticker': ticker,
                     'model': model_name,
                     'date': date,
-                    'prediction': {
-                        'direction': int(prediction),
-                        'direction_text': 'SUBIDA' if prediction == 1 else 'BAJADA',
-                        'probability': float(probability),
-                        'confidence': self._get_confidence_level(probability)
+                    'prediction': int(prediction),
+                    'direction_text': 'SUBIDA' if prediction == 1 else 'BAJADA',
+                    'probability': float(probability),
+                    'confidence': self._get_confidence_level(probability),
+                    'features': feature_dict,
+                    'prices': {
+                        'open': float(row['Open']),
+                        'high': float(row['High']),
+                        'low': float(row['Low']),
+                        'close': float(row['Close'])
                     },
                     'validation_available': False,
                     'message': 'Datos del día siguiente no disponibles para validación'
@@ -113,11 +129,16 @@ class PredictionService:
                 'ticker': ticker,
                 'model': model_name,
                 'date': date,
-                'prediction': {
-                    'direction': int(prediction),
-                    'direction_text': 'SUBIDA' if prediction == 1 else 'BAJADA',
-                    'probability': float(probability),
-                    'confidence': self._get_confidence_level(probability)
+                'prediction': int(prediction),
+                'direction_text': 'SUBIDA' if prediction == 1 else 'BAJADA',
+                'probability': float(probability),
+                'confidence': self._get_confidence_level(probability),
+                'features': feature_dict,
+                'prices': {
+                    'open': float(row['Open']),
+                    'high': float(row['High']),
+                    'low': float(row['Low']),
+                    'close': float(row['Close'])
                 },
                 'real': {
                     'direction': int(real_direction),
