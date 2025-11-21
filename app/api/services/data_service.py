@@ -117,6 +117,25 @@ class DataService:
         
         return self._tickers_list
     
+    def get_ticker_history(self, ticker: str, days: int = 30) -> Dict:
+        ticker_df = self.get_ticker_data(ticker)
+        
+        if len(ticker_df) == 0:
+            raise ValueError(f'Ticker {ticker} no encontrado')
+        
+        recent_data = ticker_df.tail(days)
+        
+        return {
+            'ticker': ticker.upper(),
+            'dates': recent_data['Date'].dt.strftime('%Y-%m-%d').tolist(),
+            'open': recent_data['Open'].tolist(),
+            'high': recent_data['High'].tolist(),
+            'low': recent_data['Low'].tolist(),
+            'close': recent_data['Close'].tolist(),
+            'volume': recent_data['Volume'].tolist(),
+            'days': len(recent_data)
+        }
+    
     def get_dataset_info(self) -> Dict:
         df = self.load_dataset()
         
