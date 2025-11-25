@@ -1,6 +1,6 @@
-# 📈 Proyecto de Aprendizaje Estadístico: Predicción NYSE
+# 📈 Sistema de Predicción del Mercado de Valores NYSE
 
-Proyecto académico de clasificación binaria para predecir la dirección del gap overnight (Open_{t+1} > Close_t) en acciones del NYSE utilizando indicadores técnicos y machine learning.
+Sistema completo de predicción de movimientos del mercado de valores (NYSE) utilizando machine learning. Incluye modelos de clasificación binaria, API REST con FastAPI, y aplicación web interactiva con visualizaciones en tiempo real.
 
 > **Universidad Privada Antenor Orrego**  
 > Curso: Aprendizaje Estadístico  
@@ -9,11 +9,15 @@ Proyecto académico de clasificación binaria para predecir la dirección del ga
 ## 📋 Tabla de Contenidos
 
 - [Descripción del Proyecto](#-descripción-del-proyecto)
+- [Características Principales](#-características-principales)
 - [Requisitos Previos](#-requisitos-previos)
 - [Guía de Instalación Paso a Paso](#-guía-de-instalación-paso-a-paso)
 - [Obtención del Dataset](#-obtención-del-dataset)
 - [Construcción del Dataset de Modelado](#-construcción-del-dataset-de-modelado)
 - [Entrenamiento de Modelos](#-entrenamiento-de-modelos)
+- [Uso de la Aplicación Web](#-uso-de-la-aplicación-web)
+- [API REST](#-api-rest)
+- [Frontend Interactivo](#-frontend-interactivo)
 - [Estructura del Proyecto](#-estructura-del-proyecto)
 - [Resultados Obtenidos](#-resultados-obtenidos)
 - [Arquitectura del Sistema](#-arquitectura-del-sistema)
@@ -22,6 +26,20 @@ Proyecto académico de clasificación binaria para predecir la dirección del ga
 ## 📖 Descripción del Proyecto
 
 Este proyecto implementa un sistema completo de clasificación binaria para predecir gaps overnight en el mercado de valores NYSE. El objetivo es determinar si el precio de apertura del día siguiente será mayor que el precio de cierre del día actual: **y_{t+1} = 1[Open_{t+1} > Close_t]**.
+
+## ✨ Características Principales
+
+### **Sistema Completo de Extremo a Extremo**
+- 🤖 **3 Modelos de Machine Learning**: Random Forest, Logistic Regression, SVM-SGD
+- 🚀 **API REST con FastAPI**: 8 endpoints para predicción, backtest y consulta de datos
+- 🎨 **Frontend Interactivo**: Interfaz web moderna con JavaScript ES6 + Tailwind CSS
+- 📊 **Visualizaciones Avanzadas**: Gráficos candlestick OHLC + indicadores técnicos
+- ⚡ **Optimización Parquet**: Carga de datos 11x más rápida (2.5s vs 30s)
+- 💾 **Caché Multinivel**: Respuestas de API instantáneas después de primera carga
+- 📈 **Dataset Masivo**: 10.4M registros históricos, 2,872 tickers del NYSE
+- 🔍 **Modo Backtest**: Validación con datos históricos reales
+- 🏢 **Logos de Empresas**: Integración con API externa para mostrar logotipos
+- 📱 **Diseño Responsive**: Interfaz adaptable a diferentes tamaños de pantalla
 
 ### **¿Qué predecimos?**
 - **Clase 0**: El precio de apertura será menor o igual al cierre anterior (no hay subida overnight)
@@ -53,10 +71,12 @@ Antes de comenzar, asegúrate de tener instalado:
   - Verificar: `python --version`
 - **Git** para clonar el repositorio
 - **PowerShell** (Windows) o Terminal (macOS/Linux)
+- **Navegador Web Moderno** (Chrome, Firefox, Edge, Safari)
 - **Espacio en disco**: ~6 GB libres
   - 500 MB para datos crudos comprimidos
   - 3 GB para datos crudos descomprimidos
-  - 2.8 GB para dataset procesado
+  - 2.8 GB para dataset procesado (CSV)
+  - 1.2 GB para dataset optimizado (Parquet)
 - **RAM**: Mínimo 8 GB recomendado (procesa 10.4 millones de registros)
 
 ## 🚀 Guía de Instalación Paso a Paso
@@ -560,6 +580,443 @@ SVM-SGD,0.5150,0.5027,0.1521,0.5123
 - LogReg y SVM-SGD tienen rendimiento similar (~0.515 en accuracy)
 - Random Forest tiene mejor F1-Score (0.5026 vs ~0.13)
 
+## 🌐 Uso de la Aplicación Web
+
+Una vez que hayas entrenado los modelos, puedes usar la aplicación web para hacer predicciones interactivas.
+
+### **Iniciar el Servidor**
+
+**Con el entorno virtual activado**:
+
+```bash
+# Iniciar servidor en modo desarrollo
+uvicorn app.main:app --reload
+
+# O especificar host y puerto
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Salida esperada**:
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process
+INFO:     Started server process
+INFO:     Waiting for application startup.
+INFO:     Loading dataset...
+INFO:     Dataset loaded successfully: 10,374,544 records, 2,872 tickers
+INFO:     Application startup complete.
+```
+
+**Primera carga**: Toma ~2-3 segundos si tienes el archivo Parquet, o ~30 segundos con CSV.
+
+### **Acceder a la Aplicación**
+
+Abre tu navegador y ve a:
+
+- **🎨 Frontend Principal**: http://localhost:8000
+- **📚 Documentación API (Swagger)**: http://localhost:8000/docs
+- **📖 Documentación API (ReDoc)**: http://localhost:8000/redoc
+- **💓 Health Check**: http://localhost:8000/health
+
+### **Uso del Frontend**
+
+#### **1. Seleccionar Ticker**
+- Escribe el símbolo de la acción (ej: `AAPL`, `MSFT`, `GOOGL`)
+- El autocompletado te mostrará sugerencias de los 2,872 tickers disponibles
+- Navega con las flechas del teclado (↑↓) y selecciona con Enter
+- O haz clic con el mouse en la sugerencia deseada
+
+#### **2. Seleccionar Fecha**
+- **Para predicción futura**: Elige cualquier fecha futura (ej: 2025-12-01)
+- **Para backtest**: Marca el checkbox "Modo Backtest" y elige una fecha pasada con datos
+- El sistema valida automáticamente que la fecha sea coherente con el modo seleccionado
+
+#### **3. Seleccionar Modelo**
+- **Random Forest** (recomendado): Mejor accuracy (70.59%)
+- **Logistic Regression**: Más rápido, interpretable
+- **SVM-SGD**: Alternativa con buen rendimiento
+
+#### **4. Ver Resultados**
+
+La aplicación muestra:
+
+**Predicción**:
+- 📊 **Resultado**: "Subirá" o "Bajará"
+- 🎯 **Probabilidad**: Confianza del modelo (0-100%)
+- 🏢 **Logo de la empresa**: Imagen corporativa
+
+**Precios del Día Seleccionado**:
+- 📈 **Open, High, Low, Close**: Precios OHLC
+- 📊 **Volume**: Volumen de transacciones
+
+**Métricas Adicionales**:
+- 📊 **Cambio Diario**: Diferencia entre Close y Open
+- 📏 **Rango del Día**: Diferencia entre High y Low
+- 📉 **Volatilidad 10 días**: Desviación estándar
+- 🔢 **RSI**: Índice de fuerza relativa
+
+**Gráficos Interactivos**:
+- 🕯️ **Candlestick OHLC**: Histórico completo del ticker con controles de zoom (1M, 3M, 6M, 1A, TODO)
+- 📊 **Indicadores Técnicos**: 13 features normalizados en gráfico de barras
+
+**Modo Backtest**:
+- ✅ **Comparación**: Predicción vs Realidad
+- 🎯 **Acierto/Error**: Indicador visual de si el modelo acertó
+- 📈 **Gap Overnight**: Explicación del cambio real entre cierre y apertura
+- 💡 **Tooltips educativos**: Ayudan a entender los conceptos
+
+### **Ejemplo de Uso Completo**
+
+**Escenario 1: Predicción Futura**
+```
+1. Ticker: AAPL
+2. Fecha: 2025-12-15 (fecha futura)
+3. Modelo: Random Forest
+4. Backtest: NO
+5. Click "Predecir"
+
+Resultado:
+- "El precio SUBIRÁ el 2025-12-16"
+- Probabilidad: 72%
+- Gráfico histórico con 5 años de datos
+- Indicadores técnicos actuales
+```
+
+**Escenario 2: Validación Histórica (Backtest)**
+```
+1. Ticker: AAPL
+2. Fecha: 2024-06-15 (fecha pasada)
+3. Modelo: Random Forest
+4. Backtest: SÍ
+5. Click "Predecir"
+
+Resultado:
+- Predicción: "Subirá" (72%)
+- Realidad: "Subió" (+0.35%)
+- ✅ El modelo ACERTÓ
+- Gap overnight: +$0.45 (de $190.23 a $190.68)
+- Comparación detallada con tooltips
+```
+
+## 🔌 API REST
+
+La aplicación expone una API REST completa para integración con otros sistemas.
+
+### **Base URL**
+```
+http://localhost:8000
+```
+
+### **Endpoints Disponibles**
+
+#### **1. Health Check**
+```http
+GET /health
+```
+
+**Respuesta**:
+```json
+{
+  "status": "healthy",
+  "message": "Service is running"
+}
+```
+
+#### **2. Listar Tickers Disponibles**
+```http
+GET /api/v1/tickers
+```
+
+**Respuesta**:
+```json
+["A", "AA", "AACG", "AAL", "AAPL", ...] // 2,872 tickers
+```
+
+#### **3. Obtener Fechas Disponibles por Ticker**
+```http
+GET /api/v1/tickers/{ticker}/dates
+```
+
+**Ejemplo**:
+```bash
+curl http://localhost:8000/api/v1/tickers/AAPL/dates
+```
+
+**Respuesta**:
+```json
+{
+  "ticker": "AAPL",
+  "min_date": "1980-12-12",
+  "max_date": "2025-10-31",
+  "total_records": 11234
+}
+```
+
+#### **4. Obtener Historial de Precios**
+```http
+GET /api/v1/tickers/{ticker}/history?days=90
+```
+
+**Parámetros**:
+- `days` (opcional): Número de días recientes (default: todos)
+
+**Ejemplo**:
+```bash
+curl "http://localhost:8000/api/v1/tickers/AAPL/history?days=90"
+```
+
+**Respuesta**:
+```json
+[
+  {
+    "date": "2025-10-31",
+    "open": 225.50,
+    "high": 228.75,
+    "low": 224.10,
+    "close": 227.25,
+    "volume": 45678900
+  },
+  ...
+]
+```
+
+#### **5. Listar Modelos Disponibles**
+```http
+GET /api/v1/models
+```
+
+**Respuesta**:
+```json
+[
+  {
+    "id": "rf",
+    "name": "Random Forest",
+    "accuracy": 0.7059,
+    "description": "Ensemble de 100 árboles de decisión"
+  },
+  {
+    "id": "logreg",
+    "name": "Logistic Regression",
+    "accuracy": 0.5156,
+    "description": "Regresión logística con regularización L2"
+  },
+  {
+    "id": "svm",
+    "name": "SVM-SGD",
+    "accuracy": 0.5150,
+    "description": "Support Vector Machine con SGD"
+  }
+]
+```
+
+#### **6. Hacer Predicción**
+```http
+POST /api/v1/predict
+Content-Type: application/json
+
+{
+  "ticker": "AAPL",
+  "date": "2025-12-01",
+  "model": "rf"
+}
+```
+
+**Ejemplo con PowerShell**:
+```powershell
+$body = @{
+    ticker = "AAPL"
+    date = "2025-12-01"
+    model = "rf"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:8000/api/v1/predict" `
+  -Method POST `
+  -Body $body `
+  -ContentType "application/json"
+```
+
+**Respuesta**:
+```json
+{
+  "ticker": "AAPL",
+  "date": "2025-12-01",
+  "prediction": 1,
+  "prediction_label": "Subirá",
+  "probability": 0.72,
+  "model_used": "rf",
+  "features": {
+    "ret_cc_1": 0.0123,
+    "sma_5": 225.50,
+    "ema_10": 223.80,
+    "std_5": 2.45,
+    ...
+  },
+  "prices": {
+    "open": 225.50,
+    "high": 228.75,
+    "low": 224.10,
+    "close": 227.25,
+    "volume": 45678900
+  }
+}
+```
+
+#### **7. Hacer Backtest**
+```http
+POST /api/v1/backtest
+Content-Type: application/json
+
+{
+  "ticker": "AAPL",
+  "date": "2024-06-15",
+  "model": "rf"
+}
+```
+
+**Ejemplo con curl**:
+```bash
+curl -X POST "http://localhost:8000/api/v1/backtest" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ticker": "AAPL",
+    "date": "2024-06-15",
+    "model": "rf"
+  }'
+```
+
+**Respuesta**:
+```json
+{
+  "ticker": "AAPL",
+  "date": "2024-06-15",
+  "prediction": {
+    "value": 1,
+    "label": "Subirá",
+    "probability": 0.72
+  },
+  "real": {
+    "direction": 1,
+    "label": "Subió",
+    "gap": 0.45,
+    "gap_percentage": 0.24,
+    "close_t": 190.23,
+    "open_t1": 190.68
+  },
+  "comparison": {
+    "is_correct": true,
+    "confidence": 0.72
+  },
+  "features": {...},
+  "prices": {...}
+}
+```
+
+### **Documentación Interactiva**
+
+FastAPI genera documentación interactiva automática:
+
+**Swagger UI** (http://localhost:8000/docs):
+- 🎮 Interfaz para probar endpoints directamente
+- 📝 Esquemas de request/response
+- 🔍 Explorador de modelos de datos
+
+**ReDoc** (http://localhost:8000/redoc):
+- 📖 Documentación más limpia y legible
+- 📊 Ejemplos de código en múltiples lenguajes
+- 🔗 Referencias cruzadas entre endpoints
+
+## 🎨 Frontend Interactivo
+
+El frontend está construido con tecnologías modernas y ligeras.
+
+### **Arquitectura Frontend**
+
+**Stack Tecnológico**:
+- **JavaScript ES6**: Módulos nativos (no requiere build)
+- **Tailwind CSS**: Framework CSS utility-first (CDN)
+- **Chart.js 4.4.0**: Biblioteca de gráficos
+- **chartjs-chart-financial**: Plugin para candlestick charts
+- **chartjs-adapter-date-fns**: Adaptador para ejes temporales
+
+**Estructura Modular** (`app/frontend/js/`):
+```
+js/
+├── config.js           # Configuración (endpoints, colores, APIs)
+├── api.js              # Cliente HTTP (7 funciones async)
+├── autocomplete.js     # Componente de autocompletado
+├── dateValidator.js    # Validación de fechas
+├── chart.js            # Gestor de gráficos Chart.js
+├── ui.js               # Gestor de interfaz (DOM)
+└── main.js             # Orquestador principal (StockPredictionApp)
+```
+
+### **Características del Frontend**
+
+#### **1. Autocompletado Inteligente**
+- Filtra 2,872 tickers en tiempo real
+- Navegación por teclado (↑↓ Enter)
+- Selección con mouse
+- Máximo 10 resultados visibles
+
+#### **2. Validación de Fechas**
+- **Modo Predicción**: Solo acepta fechas futuras
+- **Modo Backtest**: Solo acepta fechas pasadas con datos
+- Feedback visual instantáneo
+
+#### **3. Visualizaciones Avanzadas**
+
+**Gráfico Candlestick OHLC**:
+- Muestra todo el historial del ticker
+- Controles de zoom temporal:
+  - 1M: Último mes
+  - 3M: Últimos 3 meses
+  - 6M: Últimos 6 meses
+  - 1A: Último año
+  - TODO: Histórico completo
+- Hover interactivo con detalles
+- Escala temporal automática
+
+**Gráfico de Indicadores Técnicos**:
+- 13 features normalizados (0-1)
+- Colores categorizados:
+  - 🔴 Retornos
+  - 🔵 Tendencia
+  - 🟢 Volatilidad
+  - 🟡 Volumen
+  - 🟣 Calendario
+- Tooltips con valores originales
+
+#### **4. Integración con API Externa**
+- Logos de empresas desde financialmodelingprep.com
+- Fallback a placeholder si no hay logo
+
+#### **5. Modo Backtest Detallado**
+- Comparación visual Predicción vs Realidad
+- Indicador de acierto/error con colores
+- Explicación del gap overnight
+- Tooltips educativos
+
+#### **6. Responsive Design**
+- Layout flexible con Tailwind Grid
+- Adaptable a móviles, tablets y desktop
+- Gráficos responsivos
+
+### **Personalización**
+
+Puedes modificar la configuración en `app/frontend/js/config.js`:
+
+```javascript
+export const API_BASE_URL = 'http://localhost:8000';
+
+export const CHART_COLORS = {
+    up: 'rgba(34, 197, 94, 0.8)',      // Verde para velas alcistas
+    down: 'rgba(239, 68, 68, 0.8)',    // Rojo para velas bajistas
+    returns: 'rgba(239, 68, 68, 0.6)', // Color para retornos
+    trend: 'rgba(59, 130, 246, 0.6)',  // Color para tendencia
+    // ... más colores
+};
+```
+
 ## 📁 Estructura Completa del Proyecto
 
 ```
@@ -569,6 +1026,7 @@ proyecto/
 ├── requirements.txt                   # 📦 Dependencias de Python
 ├── train_models.py                    # 🚀 CLI para entrenar modelos
 ├── verificar_dataset.py              # ✅ Script de verificación
+├── convert_to_parquet.py              # ⚡ Convierte CSV a Parquet (opcional)
 │
 ├── datasets/                          # 📊 Datos (no incluidos en Git)
 │   ├── nyse/                         # Datos crudos de Stooq
@@ -581,14 +1039,13 @@ proyecto/
 │       ├── dataset_modelado.csv      # 💾 2.8 GB - 10.4M registros (CSV)
 │       └── dataset_modelado.parquet  # ⚡ 1.2 GB - 10.4M registros (Parquet, 11x más rápido)
 │
-├── core/                              # 🧠 Código principal
+├── core/                              # 🧠 Lógica de negocio
 │   ├── config/                       # Configuración
 │   │   ├── __init__.py
 │   │   └── settings.py               # ⚙️ Parámetros centralizados
 │   │
 │   ├── data/                         # Construcción de datos
 │   │   └── make_dataset.py           # 🔨 Genera dataset_modelado.csv
-├── convert_to_parquet.py              # ⚡ Convierte CSV a Parquet (opcional)
 │   │
 │   ├── models/                       # Modelos y evaluación
 │   │   ├── __init__.py
@@ -608,10 +1065,38 @@ proyecto/
 │       ├── __init__.py
 │       └── visualization.py          # 📉 Matrices de confusión
 │
+├── app/                               # 🌐 Aplicación Web
+│   ├── __init__.py
+│   ├── main.py                       # 🚀 Punto de entrada FastAPI
+│   ├── config.py                     # ⚙️ Configuración de la app
+│   │
+│   ├── api/                          # 🔌 API REST
+│   │   ├── __init__.py
+│   │   ├── routes/                   # Endpoints
+│   │   │   ├── __init__.py
+│   │   │   └── predict.py            # 📡 Rutas de predicción
+│   │   │
+│   │   └── services/                 # Lógica de servicios
+│   │       ├── __init__.py
+│   │       ├── data_service.py       # 📊 Acceso a datos + caché
+│   │       ├── model_loader.py       # 🤖 Carga de modelos ML
+│   │       └── prediction_service.py # 🔮 Lógica de predicción
+│   │
+│   └── frontend/                     # 🎨 Interfaz de usuario
+│       ├── index.html                # 📄 Página principal
+│       └── js/                       # JavaScript ES6 modular
+│           ├── config.js             # ⚙️ Configuración
+│           ├── api.js                # 📡 Cliente HTTP
+│           ├── autocomplete.js       # 🔍 Autocompletado
+│           ├── dateValidator.js      # 📅 Validación de fechas
+│           ├── chart.js              # 📊 Gráficos Chart.js
+│           ├── ui.js                 # 🎨 Gestor de interfaz
+│           └── main.js               # 🎯 Orquestador principal
+│
 ├── models/                            # 💾 Modelos serializados (.pkl)
-│   ├── model_logreg.pkl
-│   ├── model_rf.pkl
-│   └── model_svm.pkl
+│   ├── rf.pkl                        # Random Forest (recomendado)
+│   ├── logreg.pkl                    # Logistic Regression
+│   └── svm.pkl                       # SVM-SGD
 │
 ├── reports/                           # 📋 Resultados del entrenamiento
 │   ├── metrics/                      # Métricas en CSV/JSON
@@ -628,18 +1113,23 @@ proyecto/
 │       ├── confusion_matrix_rf.png      # Matriz RF
 │       └── confusion_matrix_svm.png     # Matriz SVM
 │
-├── docs/                              # 📚 Documentación académica
-│   ├── Aprendizaje Estadistico - Proyecto - Jeancarlo Morales.md
-│   └── Silabo AE 2025-20 - ISIA.md
-│
-└── app/                               # 🚧 Aplicación futura
+└── docs/                              # 📚 Documentación académica
+    ├── Aprendizaje Estadistico - Proyecto - Jeancarlo Morales.md
+    └── Silabo AE 2025-20 - ISIA.md
 ```
 
 ### **Resumen de Archivos Clave**
 
 | Archivo | Propósito |
-|---------|-----------|
+|---------|-----------|  
 | `train_models.py` | Punto de entrada CLI para entrenar modelos |
+| `convert_to_parquet.py` | Convierte CSV a Parquet (11x más rápido) |
+| `app/main.py` | Aplicación FastAPI (servidor web) |
+| `app/frontend/index.html` | Interfaz de usuario principal |
+| `app/frontend/js/main.js` | Orquestador del frontend |
+| `app/api/routes/predict.py` | Endpoints de la API REST |
+| `app/api/services/data_service.py` | Acceso a datos con caché multinivel |
+| `app/api/services/prediction_service.py` | Lógica de predicción y features |
 | `core/config/settings.py` | Configuración centralizada (paths, hiperparámetros) |
 | `core/data/make_dataset.py` | Construye dataset de 10.4M registros |
 | `core/models/base_model.py` | Clase abstracta con fit/predict/save |
@@ -647,9 +1137,7 @@ proyecto/
 | `core/models/validation.py` | Walk-forward validation k-fold |
 | `core/models/evaluate.py` | Evaluación final en test set |
 | `core/pipelines/training_pipeline.py` | Orquestador principal del flujo |
-| `reports/metrics/models_comparison.csv` | Comparación final de modelos |
-
-## 🔬 Detalles Técnicos
+| `reports/metrics/models_comparison.csv` | Comparación final de modelos |## 🔬 Detalles Técnicos
 
 ### **Dataset**
 
@@ -864,6 +1352,79 @@ New-Item -ItemType Directory -Force -Path models
 mkdir -p reports/metrics reports/figures models
 ```
 
+### **Error: "Cannot GET / " al acceder a http://localhost:8000**
+
+**Causa**: Servidor FastAPI no está corriendo o falló al iniciar.
+
+**Solución**:
+1. Verifica que ejecutaste `uvicorn app.main:app --reload`
+2. Revisa el terminal en busca de errores
+3. Asegúrate de que el puerto 8000 no esté ocupado
+4. Prueba con otro puerto: `uvicorn app.main:app --reload --port 8001`
+
+### **Error: "Model file not found: models/rf.pkl"**
+
+**Causa**: Modelos no han sido entrenados aún.
+
+**Solución**:
+```bash
+python train_models.py
+```
+
+Espera a que termine el entrenamiento (~1-2 horas para todos los modelos).
+
+### **Gráficos no se muestran o aparecen en blanco**
+
+**Causa**: Librerías de Chart.js no cargaron correctamente o datos insuficientes.
+
+**Solución**:
+1. Verifica conexión a internet (Chart.js se carga desde CDN)
+2. Revisa la consola del navegador (F12) en busca de errores
+3. Intenta con otro ticker que tenga más datos históricos
+4. Refresca la página (Ctrl+F5)
+
+### **Autocompletado no funciona**
+
+**Causa**: Lista de tickers no se cargó desde la API.
+
+**Solución**:
+1. Verifica que el servidor esté corriendo
+2. Prueba manualmente: http://localhost:8000/api/v1/tickers
+3. Revisa la consola del navegador (F12) para errores CORS
+4. Asegúrate de que el dataset esté cargado correctamente
+
+### **Mensaje: "Ticker no encontrado" o "Fecha sin datos"**
+
+**Causa**: El ticker o la fecha seleccionada no existen en el dataset.
+
+**Solución**:
+1. Verifica que escribiste correctamente el ticker (ej: AAPL, no Apple)
+2. Usa el autocompletado para seleccionar tickers válidos
+3. Para backtest, elige fechas dentro del rango del dataset (1962-2025)
+4. Evita fines de semana y festivos (mercado cerrado)
+
+### **Servidor muy lento en primera carga**
+
+**Causa**: Carga inicial del dataset (10.4M registros).
+
+**Esto es normal**:
+- Primera carga con Parquet: ~2-3 segundos
+- Primera carga con CSV: ~30 segundos
+- Cargas posteriores usan caché: <50ms
+
+**Solución para acelerar**:
+1. Asegúrate de tener el archivo Parquet: `python convert_to_parquet.py`
+2. No reinicies el servidor constantemente (usa `--reload` solo en desarrollo)
+
+### **Error CORS en frontend**
+
+**Causa**: Problemas de configuración CORS (Cross-Origin Resource Sharing).
+
+**Solución**: La aplicación ya tiene CORS habilitado. Si persiste:
+1. Asegúrate de acceder desde http://localhost:8000 (no desde file://)
+2. No uses proxies o VPNs que puedan interferir
+3. Verifica que `app/main.py` tenga configurado CORS correctamente
+
 ## 🔍 Verificación Final
 
 Para asegurar que todo funciona correctamente:
@@ -938,6 +1499,46 @@ ls -lh reports/figures/*.png
 # 3 archivos PNG (confusion matrices)
 ```
 
+### **7. Verificar aplicación web**
+```powershell
+# Iniciar servidor
+uvicorn app.main:app --reload
+
+# En otro terminal o navegador, probar endpoints
+Invoke-RestMethod -Uri "http://localhost:8000/health"
+
+# Debería responder:
+# status  : healthy
+# message : Service is running
+```
+
+**Verificar en navegador**:
+1. Abre http://localhost:8000
+2. Deberías ver la interfaz con:
+   - Contador de tickers (2,872)
+   - Contador de modelos (3)
+   - Estado "Sistema Activo"
+   - Formulario de predicción
+3. Prueba escribir "AA" en el campo ticker
+4. Deberías ver sugerencias de autocompletado
+
+### **8. Prueba completa end-to-end**
+```bash
+# Hacer una predicción de prueba
+$body = @{
+    ticker = "AAPL"
+    date = "2025-12-01"
+    model = "rf"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:8000/api/v1/predict" `
+  -Method POST `
+  -Body $body `
+  -ContentType "application/json"
+
+# Debería devolver predicción con probabilidad
+```
+
 ## 📚 Referencias y Recursos
 
 ### **Dataset**
@@ -988,6 +1589,22 @@ Este proyecto es de uso **académico exclusivo**.
 
 ## 📝 Changelog
 
+### **Versión 2.0** (Noviembre 2025)
+- ✅ **API REST completa con FastAPI**: 8 endpoints para predicción, backtest y datos
+- ✅ **Frontend web interactivo**: JavaScript ES6 + Tailwind CSS + Chart.js
+- ✅ **Optimización Parquet**: Carga 11x más rápida (2.5s vs 30s)
+- ✅ **Caché multinivel**: Respuestas de API instantáneas
+- ✅ **Gráficos candlestick**: Visualización OHLC con controles de zoom
+- ✅ **Modo backtest**: Validación con datos históricos reales
+- ✅ **Autocompletado inteligente**: 2,872 tickers con navegación por teclado
+- ✅ **Integración logos**: API externa financialmodelingprep
+- ✅ **Arquitectura modular**: 6 módulos JS + servicios backend
+- ✅ **Documentación API**: Swagger UI + ReDoc automáticos
+- ✅ **Validación de fechas**: Lógica para predicción futura vs backtest pasado
+- ✅ **Indicadores técnicos visuales**: 13 features en gráfico de barras
+- ✅ **Métricas adicionales**: Cambio diario, rango, volatilidad, RSI
+- ✅ **Tooltips educativos**: Explicaciones del gap overnight
+
 ### **Versión 1.0** (Noviembre 2025)
 - ✅ Construcción del dataset (10.4M registros)
 - ✅ Implementación de 3 modelos (LogReg, RF, SVM-SGD)
@@ -999,18 +1616,27 @@ Este proyecto es de uso **académico exclusivo**.
 - ✅ README completo con guía paso a paso
 
 ### **Futuras Mejoras** (Roadmap)
-- 🔄 Aplicación web interactiva (Streamlit/Dash)
+- 🔄 Deployment en cloud (Render, Railway, Google Cloud Run)
 - 🔄 Tuning de hiperparámetros con GridSearchCV
 - 🔄 Modelos adicionales (XGBoost, LightGBM)
-- 🔄 Feature engineering avanzado (RSI, MACD, Bollinger Bands)
+- 🔄 Feature engineering avanzado (MACD, Bollinger Bands)
 - 🔄 Análisis de feature importance
-- 🔄 Backtesting con estrategia de trading
+- 🔄 Backtesting con estrategia de trading simulada
+- 🔄 Exportar resultados a PDF/CSV
+- 🔄 Testing automatizado (pytest)
+- 🔄 CI/CD con GitHub Actions
 
 ---
 
-**🎯 Estado del Proyecto**: ✅ **COMPLETO Y FUNCIONAL**
+**🎯 Estado del Proyecto**: ✅ **COMPLETO Y FUNCIONAL - VERSIÓN 2.0**
 
-**Última actualización**: 08 de Noviembre del 2025
+**Última actualización**: 25 de Noviembre del 2025
+
+**Novedades v2.0**:
+- 🌐 Aplicación web completa con API REST + Frontend
+- ⚡ Optimización Parquet (11x más rápida)
+- 📊 Visualizaciones interactivas con Chart.js
+- 🔍 Sistema de backtest para validación histórica
 
 **¿Dudas?** Consulta la sección de [Solución de Problemas](#-solución-de-problemas) o contacta al autor.
 

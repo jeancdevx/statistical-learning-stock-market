@@ -4,7 +4,7 @@
 
 **Programa de Estudio de Ingeniería de Sistemas e Inteligencia Artificial** 
 
-![](Aspose.Words.ccc5bea3-c0b5-4595-9c89-688e86b3c3b6.001.png)
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.001.png)
 
 **Curso:** Aprendizaje Estadístico **Proyecto Semestral** 
 
@@ -50,10 +50,22 @@ Aprendizaje Estadístico  Proyecto Semestral
 1. [Planteamiento del modelo de aprendizaje ............................................................ 12 ](#_page11_x82.00_y490.00)
 1. [Desarrollo e implementación del modelo ............................................................. 14 ](#_page13_x82.00_y71.00)
 5. [Comprobación .............................................................................................................. 16 ](#_page15_x82.00_y142.00)
+1. [Obtencion del dataset............................................................................................ 16 ](#_page15_x82.00_y177.00)
+1. [Construcción del dataset ....................................................................................... 17 ](#_page16_x82.00_y299.00)
+3. [Arquitectura Modular del Sistema........................................................................ 23 ](#_page22_x82.00_y71.00)
+3. [Validación Cruzada Walk-Forward....................................................................... 24 ](#_page23_x82.00_y204.00)
+3. [Entrenamiento de Modelos ................................................................................... 25 ](#_page24_x82.00_y71.00)
+1. [Regresión Logística ...................................................................................... 27 ](#_page26_x82.00_y71.00)
+1. [Random Forest.............................................................................................. 29 ](#_page28_x82.00_y286.00)
+1. [SVM con Descenso de Gradiente Estocástico.............................................. 32 ](#_page31_x82.00_y121.00)
+6. [Comparación Final y Selección del Mejor Modelo .............................................. 34 ](#_page33_x82.00_y407.00)
+6. [Evaluación .................................................................................................................... 36 ](#_page35_x82.00_y71.00)
+1. [Análisis Detallado de Métricas ............................................................................. 36 ](#_page35_x82.00_y96.00)
+1. [Interpretación de Matrices de Confusión.............................................................. 37 ](#_page36_x82.00_y613.00)
+1. [Análisis de Estabilidad Temporal ......................................................................... 41 ](#_page40_x82.00_y121.00)
 
-5\.1.  Entrenamiento  del  Modelo:  Aplicación  al  Modelo:  uso  del  Data-Set  de Entrenamiento y de Prueba ............................................... **¡Error! Marcador no definido.** 
+[Referencias Bibliograficas .................................................................................................... 43 ](#_page42_x82.00_y363.00)
 
-6. [Evaluación .................................................................................................................... 16 ](#_page15_x82.00_y234.00)[Bibliografía ........................................................................................................................... 17 ](#_page16_x82.00_y71.00)
 1. **Introducción<a name="_page3_x82.00_y71.00"></a>** 
 
 <a name="_page3_x82.00_y96.00"></a>**1.1.Título del Proyecto** 
@@ -245,11 +257,198 @@ La implementación se realiza con un pipeline reproducible en Python. El flujo e
 - Evitar  **look-ahead**  y  **survivorship  bias**:  los  cálculos  usan  sólo  datos disponibles al cierre de  y se mantienen tickers constantes durante el período evaluado. 
 5. **Comprobación<a name="_page15_x82.00_y142.00"></a>** 
 
-**5.1.Construcción de la matriz de aprendizaje** 
+<a name="_page15_x82.00_y177.00"></a>**5.1.Obtencion del dataset** 
 
-6. **Evaluación<a name="_page15_x82.00_y234.00"></a>** 
+El  dataset  utilizado  proviene  de  Stooq  [(https://stooq.com), ](vscode-file://vscode-app/c:/Users/jcode/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-browser/workbench/workbench.html) específicamente  del paquete "U.S. - daily (ASCII)" que contiene series históricas diarias de todas las acciones negociadas en mercados estadounidenses. Para este proyecto se filtró exclusivamente el universo  NYSE  (New  York  Stock  Exchange),  descartando  ETFs  y  otros  instrumentos financieros para concentrarse únicamente en acciones individuales. 
 
-<a name="_page16_x82.00_y71.00"></a>**Bibliografía** 
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.002.jpeg)
+
+La descarga del dataset se realizó mediante el archivo comprimido disponible en la plataforma Stooq, obteniendo un total de 3,649 archivos en formato texto (\*.txt), cada uno correspondiente a un ticker diferente. Cada archivo contiene las series temporales con las variables OHLCV (Open, High, Low, Close, Volume) en formato diario, abarcando un rango histórico desde 1962 hasta octubre de 2025. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.003.png)
+
+<a name="_page16_x82.00_y299.00"></a>**5.2.Construcción del dataset** 
+
+Una vez descargados los archivos crudos, se procedió a la construcción del dataset de modelado  mediante  el  script make\_dataset.py.  Este  proceso  se  divide  en  cuatro  etapas fundamentales:  lectura  y  normalización  de  archivos,  construcción  de  features  técnicos, construcción de la variable objetivo y división temporal del dataset. 
+
+La  primera  función  implementada  es leer\_archivo\_stooq(),  que  se  encarga  de procesar cada archivo individual. Esta función realiza la lectura del archivo CSV, elimina los caracteres especiales (< y >) de los nombres de columnas que utiliza el formato Stooq, convierte las fechas del formato YYYYMMDD a datetime de Python, selecciona únicamente las  columnas  necesarias  (TICKER,  DATE,  OPEN,  HIGH,  LOW,  CLOSE, VOL)  y  las renombra  a  un  formato  estandarizado.  Adicionalmente,  extrae  el  símbolo  del  ticker eliminando  el  sufijo .US y  ordena  los  datos  cronológicamente.  Durante  este  proceso  se implementó manejo de excepciones para identificar archivos corruptos o vacíos, los cuales fueron descartados automáticamente. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.004.jpeg)
+
+La función construir\_features() implementa el  cálculo de 13 indicadores técnicos derivados  de  las  series  OHLCV.  Estos  indicadores  se  organizan  en  cuatro  categorías principales  según  su  naturaleza:  retornos  logarítmicos  (ret\_cc\_1,  ret\_oo\_1,  ret\_co\_1), indicadores de tendencia y momentum (sma\_5, sma\_10, ema\_10, mom\_5), medidas de volatilidad  (std\_5,  std\_10,  range\_rel)  e  indicadores  basados  en  volumen  (vol\_ma\_10, vol\_rel). Adicionalmente se incluye la variable dow (day of week) que captura efectos calendario. Todos los cálculos respetan estrictamente la temporalidad, utilizando únicamente información  disponible  hasta  el  día  t  para  evitar  look-ahead  bias.  Se  implementaron protecciones contra divisiones por cero y se reemplazaron valores infinitos por NaN para garantizar la calidad del dataset. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.005.png)
+
+La  función construir\_etiqueta() implementa  la  definición  formal  de  la  variable objetivo  del  problema  de  clasificación  binaria.  La  etiqueta  se  construye  como  +1 = 1[Open +1 > Close ],  donde 1 es  la  función  indicadora  que  toma  el  valor  1  cuando  la 
+
+condición  es  verdadera  y  0  en  caso  contrario.  Esta  definición  captura  precisamente  el fenómeno de interés: predecir si el precio de apertura del día siguiente será mayor que el precio  de  cierre  del  día  actual,  lo  que  representa  un  gap  overnight  positivo.  La implementación utiliza la función shift(-1) de pandas para acceder al valor futuro de la apertura, respetando el principio de que esta información no está disponible en el momento t. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.006.png)
+
+La función split\_temporal() realiza la partición del dataset siguiendo un protocolo estricto de división temporal que respeta la naturaleza secuencial de las series financieras. A diferencia de la validación cruzada aleatoria tradicional, este método divide cada ticker individualmente según su cronología, asignando el 75% más antiguo a entrenamiento, el siguiente 10% a validación y el 15% final a prueba. Esta aproximación garantiza que nunca se entrene con información posterior a la que se evalúa, evitando completamente el look- ahead bias que invalidaría los resultados. La implementación itera sobre cada ticker único del dataset, ordena sus observaciones cronológicamente, calcula los índices de corte según los porcentajes especificados y asigna la etiqueta correspondiente (train, val o test) a cada observación. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.007.png)
+
+La  ejecución  del  script  de  construcción  se  realizó  mediante  el  comando python core/data/make\_dataset.py en  el  entorno  virtual  del  proyecto.  El  proceso  tardó aproximadamente 8 minutos en completarse, procesando los 3,649 archivos de entrada. Durante  la  ejecución  se  identificaron  algunos  archivos  corruptos  o  vacíos  que  fueron automáticamente descartados, lo cual se reportó mediante mensajes de advertencia en la consola. El proceso aplicó un filtro de calidad que descartó tickers con menos de 300 días de historia,  garantizando  que  todos  los  tickers  incluidos  tuvieran  suficiente  profundidad temporal para el cálculo de indicadores con ventanas de hasta 10 días. 
+
+El dataset consolidado final contiene 10,374,544 registros correspondientes a 2,872 tickers únicos, abarcando un rango temporal desde el 16 de enero de 1962 hasta el 31 de octubre de 2025. La división temporal resultó en 7,780,908 registros para entrenamiento (74.99%), 1,037,454 registros para validación (10.00%) y 1,556,182 registros para prueba (15.02%). El análisis del balance de clases reveló una distribución prácticamente equitativa: la clase 0 (Open\_{t+1} ≤ Close\_t) representa el 51.63% de las observaciones mientras que la  clase  1  (Open\_{t+1}  >  Close\_t)  representa  el  48.37%,  lo  cual  es  esperado  dada  la naturaleza  aproximadamente  simétrica  de  los  movimientos  de  precios  en  mercados eficientes. En el conjunto de prueba específicamente, esta distribución se invierte ligeramente con 48.61% clase 0 y 51.39% clase 1, manteniendo el balance adecuado para evaluar modelos de  clasificación  binaria.  El  archivo  resultante dataset\_modelado.csv tiene  un  tamaño  de 2,832.9 MB y fue almacenado en la carpeta processed. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.008.png)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.009.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.010.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.011.jpeg)
+
+<a name="_page22_x82.00_y71.00"></a>**5.3.Arquitectura Modular del Sistema** 
+
+Una vez construido el dataset de modelado, se procedió al diseño e implementación de  la  arquitectura  de  software  que  ejecutaría  el  pipeline  completo  de  entrenamiento  y evaluación. El sistema fue diseñado siguiendo principios SOLID (Single Responsibility, Open/Closed,  Liskov  Substitution,  Interface  Segregation,  Dependency  Inversion)  para garantizar mantenibilidad, extensibilidad y testabilidad del código. 
+
+La arquitectura se organizó en cuatro capas principales. La capa de configuración centralizada, implementada en settings.py, contiene todas las constantes y parámetros del proyecto  como  rutas  de archivos, porcentajes de división  temporal,  hiperparámetros de modelos  y  configuración  de  paralelización.  Esta  centralización  facilita  el  ajuste  de parámetros sin modificar múltiples archivos y garantiza consistencia en toda la ejecución. 
+
+La capa de modelos, ubicada en models, implementa un patrón de diseño orientado a objetos donde cada algoritmo de clasificación hereda de una clase base abstracta BaseModel que  define  la  interfaz  común.  Se  implementaron  tres  modelos  concretos: LogisticRegressionModel  para  regresión  logística  con  regularización  L2, RandomForestModel  para  ensambles  de  árboles  de  decisión  y  SVMSGDModel  para máquinas  de  vectores  de  soporte  con  descenso  de  gradiente  estocástico.  Cada  modelo encapsula  su  propia  lógica  de  preprocesamiento,  incluyendo  normalización  cuando  es necesario, y expone métodos estandarizados para entrenamiento, predicción y cálculo de probabilidades. Adicionalmente se implementó un patrón Factory en model\_factory.py que permite instanciar modelos dinámicamente por nombre, facilitando la extensión futura del sistema con nuevos algoritmos sin modificar el código existente. 
+
+La  capa  de  pipelines,  implementada  en  training\_pipeline.py,  orquesta  el  flujo completo  de entrenamiento.  Esta clase se encarga de cargar el  dataset, iterar sobre los modelos  especificados,  ejecutar  la  validación  cruzada  walk-forward  en  el  conjunto  de validación, reentrenar en el conjunto combinado train+val, evaluar en el conjunto de test, generar visualizaciones de matrices de confusión y persistir los modelos entrenados en disco. El pipeline implementa logging detallado en cada etapa para facilitar el  monitoreo del progreso y diagnóstico de errores. 
+
+Finalmente, la capa de interfaz de usuario, representada por el script train\_models.py en la raíz del proyecto, proporciona una interfaz de línea de comandos (CLI) que permite al usuario ejecutar el pipeline completo o seleccionar modelos específicos, ajustar el número de folds para validación cruzada y especificar rutas personalizadas del dataset. Esta separación entre interfaz y lógica de negocio permite reutilizar el pipeline desde otros contextos como notebooks de Jupyter, APIs REST o interfaces gráficas futuras. 
+
+<a name="_page23_x82.00_y204.00"></a>**5.4.Validación Cruzada Walk-Forward** 
+
+La validación de los modelos se realizó mediante una estrategia de walk-forward cross-validation  específicamente  diseñada  para  series  temporales.  A  diferencia  de  la validación cruzada k-fold tradicional que mezcla aleatoriamente las observaciones, esta técnica respeta estrictamente el orden temporal de los datos para evitar contaminación de información futura en las predicciones. 
+
+El conjunto de validación (10% del dataset, equivalente a 1,037,454 registros) se dividió en k=5 bloques temporales contiguos de aproximadamente 207,490 registros cada uno. En el primer fold, el modelo se entrena únicamente con el conjunto de entrenamiento base (75%) y valida en el primer bloque del 10%. En el segundo fold, el modelo se reentrena con el conjunto de entrenamiento base más el primer bloque de validación ya observado, y valida en el segundo bloque. Este proceso se repite iterativamente hasta el quinto fold, donde el modelo se entrena con el 75% inicial más los primeros cuatro bloques de validación (83% acumulado) y valida en el bloque final. 
+
+Esta aproximación simula de manera realista cómo un modelo sería utilizado en producción,  donde  continuamente  se  incorporan  nuevas  observaciones  al  conjunto  de entrenamiento  para mantener el  modelo actualizado con los  patrones más recientes del mercado. Cada fold genera métricas de desempeño (accuracy, balanced accuracy, precision, recall, F1-score y ROC-AUC) que posteriormente se promedian para obtener una estimación robusta de la capacidad de generalización del  modelo. La desviación  estándar de estas métricas a través de los folds proporciona información sobre la estabilidad temporal del modelo ante pequeños cambios en la distribución de los datos. 
+
+<a name="_page24_x82.00_y71.00"></a>**5.5.Entrenamiento de Modelos** 
+
+La  ejecución  del  pipeline  completo  de  entrenamiento  se  realizó  mediante  el comando python  train\_models.py utilizando  el  intérprete  Python  del  entorno  virtual.  El proceso inició a las 15:46:30 del 8 de noviembre de 2025 y finalizó a las 17:27:04 del mismo día, con una duración total de 1 hora 40 minutos y 34 segundos. La configuración utilizada estableció k=5 folds para walk-forward, 13 indicadores técnicos como features, división temporal 75%/10%/15% y paralelización con 8 núcleos de CPU. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.012.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.013.png)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.014.png)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.015.png)
+
+1. **Regresión<a name="_page26_x82.00_y71.00"></a> Logística** 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.016.png)
+
+El primer modelo entrenado fue Regresión Logística con regularización L2 (C=1.0). Este modelo lineal sirve como baseline interpretable del problema. Durante la validación walk-forward, el modelo mostró métricas consistentes a través de los cinco folds. El accuracy promedio fue de 0.5120 ± 0.0050, apenas 1.2 puntos porcentuales por encima del azar (50%). El balanced accuracy de 0.5030 ± 0.0017 confirma que el modelo no está sesgado hacia ninguna clase particular. Sin embargo, el recall extremadamente bajo de 0.0841 ± 0.0155 indica que el modelo predice la clase 1 (subida overnight) con mucha cautela, resultando en un F1-score deficiente de 0.1437 ± 0.0232. El ROC-AUC de 0.5204 ± 0.0034 sugiere que el modelo  tiene  cierta  capacidad  para  ordenar  las  predicciones  por  probabilidad,  aunque limitada. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.017.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.018.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.019.jpeg)
+
+En la evaluación final sobre el conjunto de test (1,556,182 ejemplos), el modelo fue reentrenado en el conjunto combinado train+val (8,818,362 ejemplos, equivalente al 85% del dataset). Las métricas de test mostraron un accuracy de 0.5156, balanced accuracy de 0.5025, precision de 0.5071, recall de 0.0606, F1-score de 0.1082 y ROC-AUC de 0.5131. La matriz de  confusión  reveló  que  el  modelo  predijo  correctamente  756,675  casos  de  clase  0 (verdaderos negativos) pero solo 45,741 casos de clase 1 (verdaderos positivos), confirmando su sesgo hacia predecir "no subida". Este comportamiento es típico de modelos lineales cuando enfrentan relaciones no lineales complejas y alta aleatoriedad en los datos. El tiempo de  entrenamiento  fue  de  aproximadamente  2  minutos,  demostrando  la  eficiencia computacional de los métodos lineales. 
+
+2. **Random<a name="_page28_x82.00_y286.00"></a> Forest** 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.020.png)
+
+El segundo modelo entrenado fue Random Forest con 100 árboles de decisión y profundidad máxima de 10 niveles. Este modelo de ensamble mostró un desempeño superior en todas las métricas comparado con la regresión logística. Durante la validación walk- forward, el accuracy promedio alcanzó 0.5367 ± 0.0031, representando una mejora de ~2.5 puntos porcentuales sobre el baseline lineal. El balanced accuracy de 0.5352 ± 0.0033 y la precision de 0.5310 ± 0.0063 indican predicciones más equilibradas entre ambas clases. Notablemente, el recall aumentó significativamente a 0.4581 ± 0.0412, demostrando que el modelo detecta 45.8% de las subidas reales comparado con solo 8.4% del modelo lineal. Esto resultó en un F1-score sustancialmente mejor de 0.4907 ± 0.0229. El ROC-AUC de 0.5557 ± 0.0049 confirma una capacidad predictiva moderada pero consistente. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.021.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.022.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.023.jpeg)
+
+En la evaluación de test, el modelo reentrenado alcanzó un accuracy de 0.5369, balanced accuracy de 0.5353, precision de 0.5247, recall de 0.4822, F1-score de 0.5026 y ROC-AUC de 0.5549. La matriz de confusión mostró una distribución más balanceada con 471,330 verdaderos negativos, 329,809 falsos positivos, 390,924 falsos negativos y 364,119 verdaderos  positivos.  Esta  distribución  indica  que  el  modelo  es  capaz  de  identificar aproximadamente la mitad de las oportunidades reales de subida overnight, aunque al costo de  generar  falsos  positivos.  El  tiempo  de  entrenamiento  fue  significativamente  mayor, aproximadamente 1 hora 37 minutos, debido a la construcción y evaluación de 100 árboles de decisión con validación walk-forward. Este modelo fue seleccionado como ganador del experimento por su ROC-AUC superior y balance entre precision y recall. 
+
+3. **SVM<a name="_page31_x82.00_y121.00"></a> con Descenso de Gradiente Estocástico** 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.024.png)
+
+El  tercer  modelo  entrenado  fue  SVM-SGD  con  loss='log\_loss'  para  permitir estimación de probabilidades. Este modelo lineal con descenso de gradiente estocástico se entrenó  con  2000  iteraciones  máximas  y  regularización  L2  (alpha=0.0001).  Durante  la validación  walk-forward,  el  modelo  mostró  métricas  similares  a  la  regresión  logística tradicional. El accuracy promedio fue de 0.5122 ± 0.0047, balanced accuracy de 0.5035 ± 0.0024, precision de 0.5071 ± 0.0103 y recall de 0.1035 ± 0.0387. El F1-score de 0.1684 ± 0.0545 fue ligeramente superior al de regresión logística pero significativamente inferior al de Random Forest. El ROC-AUC de 0.5167 ± 0.0032 nuevamente confirma poder predictivo limitado. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.025.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.026.jpeg)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.027.jpeg)
+
+En la evaluación de test, el modelo alcanzó un accuracy de 0.5150, balanced accuracy de 0.5027, precision de 0.5010, recall de 0.0897, F1-score de 0.1521 y ROC-AUC de 0.5123. La  matriz  de  confusión  reveló  733,701  verdaderos  negativos,  67,438  falsos  positivos, 687,347 falsos negativos y 67,696 verdaderos positivos. Al igual que la regresión logística, este modelo muestra fuerte sesgo hacia predecir la clase 0, identificando menos del 9% de las  subidas  reales.  El  tiempo  de  entrenamiento  fue  de  aproximadamente  3  minutos, posicionándose entre el método lineal más simple y el ensamble de árboles. Este modelo obtuvo el último lugar en la comparación final. 
+
+<a name="_page33_x82.00_y407.00"></a>**5.6.Comparación Final y Selección del Mejor Modelo** 
+
+Al finalizar el entrenamiento de los tres modelos, el pipeline generó automáticamente una comparación consolidada ordenada por ROC-AUC en el conjunto de test. Random Forest emergió como el modelo ganador con ROC-AUC de 0.5549, accuracy de 0.5369, balanced accuracy de 0.5353 y F1-score de 0.5026. Logistic Regression ocupó el segundo lugar con ROC-AUC de 0.5131, accuracy de 0.5156 y F1-score de 0.1082. SVM-SGD quedó en tercer lugar con ROC-AUC de 0.5123, accuracy de 0.5150 y F1-score de 0.1521. 
+
+La superioridad de Random Forest se explica por su capacidad inherente de capturar relaciones no lineales y complejas interacciones entre features sin requerir transformaciones explícitas.  Los  árboles  de  decisión  individuales  dentro  del  bosque  pueden  identificar umbrales específicos en los indicadores técnicos que separan patrones de subida y bajada, mientras que el ensamble promedia estas decisiones reduciendo la varianza y mejorando la generalización. Adicionalmente, Random Forest es robusto ante features en diferentes escalas y no requiere normalización, evitando potenciales problemas de preprocesamiento. 
+
+Los  modelos  lineales  (Logistic  Regression  y  SVM-SGD)  mostraron  desempeño similar y limitado, lo cual es consistente con la naturaleza no lineal y altamente ruidosa de los datos financieros. Estos modelos asumen una relación lineal o cuasi-lineal entre los indicadores  técnicos  y  la  probabilidad  de  subida  overnight,  una  suposición  que evidentemente no se cumple en este dominio. El bajo recall de ambos modelos lineales sugiere  que  adoptaron  una  estrategia  conservadora,  prediciendo  mayormente  la  clase negativa para minimizar el error de clasificación global, sacrificando la detección de patrones positivos. 
+
+A pesar del desempeño superior de Random Forest, es importante contextualizar estos resultados. Un ROC-AUC de 0.5549 significa que el modelo tiene aproximadamente 55.49% de  probabilidad  de  ordenar  correctamente  un  par  aleatorio  de  observaciones  positiva- negativa, apenas 5.49 puntos porcentuales mejor que clasificación aleatoria. Esto confirma que los indicadores técnicos simples derivados únicamente de datos OHLCV tienen poder predictivo limitado para el fenómeno de gaps overnight, lo cual es consistente con la hipótesis de mercados eficientes que establece que los precios ya incorporan toda la información disponible públicamente. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.028.jpeg)
+
+6. **Evaluación<a name="_page35_x82.00_y71.00"></a>** 
+
+<a name="_page35_x82.00_y96.00"></a>**6.1.Análisis Detallado de Métricas** 
+
+La evaluación final de los modelos se realizó sobre el conjunto de test que contiene 1,556,182 observaciones correspondientes al período temporal más reciente (15% final del dataset). Este conjunto representa aproximadamente 63 años de datos históricos diarios de 2,872 acciones NYSE, con una distribución de clases de 48.61% para la clase 0 (Open\_{t+1} ≤ Close\_t) y 51.39% para la clase 1 (Open\_{t+1} > Close\_t). Esta ligera predominancia de la clase positiva en el período de test sugiere un mercado con tendencia alcista durante el período evaluado, lo cual es históricamente consistente con el comportamiento de largo plazo del NYSE. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.029.jpeg)
+
+El modelo ganador, Random Forest, alcanzó un accuracy de 53.69% en el conjunto de test, superando por 2.21 puntos porcentuales la baseline de 51.48% (correspondiente a predecir siempre la clase mayoritaria). Si bien esta mejora puede parecer modesta, representa un logro significativo considerando la naturaleza altamente estocástica de los mercados financieros  y  la  eficiencia  informacional  del  NYSE.  El  balanced  accuracy  de  53.53% confirma que esta mejora no proviene de un sesgo hacia la clase mayoritaria, sino de una genuina capacidad predictiva equilibrada entre ambas clases. 
+
+La precision del modelo Random Forest fue de 52.47%, indicando que cuando el modelo predice una subida overnight (clase 1), acierta aproximadamente en la mitad de los casos. Este nivel de precision es suficiente para superar los costos de transacción típicos en trading algorítmico (que usualmente oscilan entre 5-10 puntos base por operación redonda), sugiriendo viabilidad potencial para aplicaciones prácticas bajo condiciones controladas. El recall de 48.22% significa que el modelo identifica aproximadamente la mitad de todas las subidas overnight reales que ocurren en el mercado. Este nivel de cobertura es razonable para una estrategia de trading selectiva que busque alta convicción en las señales. 
+
+El  F1-score  de  0.5026  representa  la  media  armónica  entre  precision  y  recall, confirmando un balance apropiado entre ambas métricas. Este valor es significativamente superior al F1-score de los modelos lineales (0.1082 para Logistic Regression y 0.1521 para SVM-SGD), demostrando que Random Forest logra un compromiso sustancialmente mejor entre minimizar falsos positivos y maximizar la detección de casos positivos reales. En contextos de trading, este balance es crucial pues tanto los falsos positivos (pérdidas por compras  incorrectas)  como  los  falsos  negativos  (oportunidades  perdidas)  tienen  costos económicos reales. 
+
+La métrica más importante para evaluar modelos de clasificación binaria es ROC- AUC (Area Under the Receiver Operating Characteristic Curve), que mide la capacidad del modelo de discriminar entre clases a través de todos los posibles umbrales de decisión. El Random Forest alcanzó un ROC-AUC de 0.5549, indicando que existe una probabilidad de 55.49% de que el modelo asigne una probabilidad mayor a una observación positiva aleatoria que a una observación negativa aleatoria. Esta métrica es particularmente valiosa porque es independiente  del  umbral  de  clasificación  elegido  y  refleja  la  calidad  intrínseca  de  las probabilidades estimadas por el modelo. 
+
+Para  contextualizar  estos  resultados,  es  útil  compararlos  con  benchmarks  de  la literatura académica en predicción de mercados financieros. Estudios recientes de machine learning aplicado a asset pricing típicamente reportan ROC-AUC entre 0.52 y 0.58 para predicción  de  dirección  de  retornos  diarios  usando  features  técnicos,  con  mejoras  más sustanciales (ROC-AUC > 0.60) obtenidas únicamente mediante modelos profundos con arquitecturas complejas, grandes volúmenes de datos alternativos y features ingenierizados específicamente para el problema. Nuestro resultado de 0.5549 se posiciona en el rango medio-alto de este espectro, demostrando que incluso con features técnicos relativamente simples existe señal predictiva explotable. 
+
+<a name="_page36_x82.00_y613.00"></a>**6.2.Interpretación de Matrices de Confusión** 
+
+El análisis detallado de las matrices de confusión proporciona insights fundamentales sobre el comportamiento de cada modelo y sus modos de fallo característicos. Para el modelo Random Forest, la matriz de confusión en el conjunto de test mostró 471,330 verdaderos negativos (TN), 329,809 falsos positivos (FP), 390,924 falsos negativos (FN) y 364,119 verdaderos positivos (TP). Esta distribución permite calcular métricas adicionales de interés práctico. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.030.jpeg)
+
+La  especificidad  del  modelo  (tasa  de  verdaderos  negativos),  calculada  como TN/(TN+FP),  resulta  en  58.83%.  Esto  significa  que  cuando  el  mercado  realmente  no experimenta  una  subida  overnight,  el  modelo  predice  correctamente  "no  subida"  en aproximadamente  6  de  cada  10  casos.  Por  otro  lado,  la  sensibilidad  o  recall  (tasa  de verdaderos positivos), calculada como TP/(TP+FN), alcanza 48.22%. Esta asimetría entre especificidad  y  sensibilidad  sugiere  que  el  modelo  es  ligeramente  más  conservador  al predecir subidas, requiriendo mayor evidencia en los indicadores técnicos para emitir una señal positiva. Este comportamiento es generalmente deseable en aplicaciones financieras donde la aversión al riesgo favorece estrategias que minimizan pérdidas sobre aquellas que maximizan ganancias absolutas. 
+
+La tasa de falsos positivos (FP rate), calculada como FP/(FP+TN), es de 41.17%. Esto implica que el modelo genera señales erróneas de compra en aproximadamente 4 de cada 10 casos donde no debería hacerlo. En términos económicos, si cada falso positivo representa una operación perdedora con costo promedio del 1% (considerando spread bid-ask, slippage y comisiones), y asumiendo que se opera sobre todas las señales positivas del modelo, esto resultaría  en  pérdidas  acumuladas  significativas  que  deberían  ser  compensadas  por  las ganancias en los verdaderos positivos. La tasa de falsos negativos (FN rate), calculada como FN/(FN+TP), es de 51.78%, indicando que el modelo pierde aproximadamente la mitad de las oportunidades reales de subida overnight. Este balance entre FP rate y FN rate determina la viabilidad práctica del modelo. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.031.jpeg)
+
+Comparando con los modelos lineales, las matrices de confusión revelan patrones de comportamiento marcadamente diferentes. Logistic Regression mostró 756,675 TN, 44,464 FP, 709,302 FN y 45,741 TP, lo que se traduce en una especificidad extremadamente alta de 94.45% pero una sensibilidad muy baja de 6.06%. Este modelo adoptó una estrategia ultra- conservadora, prediciendo la clase positiva solo en casos de altísima convicción según su frontera de decisión lineal. Si bien esta estrategia minimiza pérdidas por falsos positivos (FP rate  de  apenas  5.55%),  sacrifica  completamente  la  detección  de  oportunidades  reales, resultando en un modelo prácticamente inútil para aplicaciones reales de trading. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.032.jpeg)
+
+El  modelo  SVM-SGD  exhibió  un  comportamiento  intermedio  con  733,701 TN, 67,438  FP,  687,347  FN  y  67,696  TP,  correspondiendo  a  especificidad  de  91.58%  y sensibilidad de 8.97%. Aunque ligeramente menos conservador que Logistic Regression, este modelo mantiene el sesgo fundamental hacia predecir la clase negativa, resultando en un recall insuficiente para capturar valor económico. La similitud en el comportamiento de ambos  modelos  lineales  confirma  que  la  limitación  no  es  específica  del  algoritmo  de optimización sino inherente a la capacidad representacional de los modelos lineales frente a la complejidad no lineal del problema. 
+
+<a name="_page40_x82.00_y121.00"></a>**6.3.Análisis de Estabilidad Temporal** 
+
+La validación cruzada walk-forward con k=5 folds proporcionó información valiosa sobre la estabilidad temporal de los modelos. Para Random Forest, el ROC-AUC varió entre 0.5492 (fold 1) y 0.5640 (fold 2), con desviación estándar de 0.0049. Esta variabilidad relativamente baja sugiere que el modelo mantiene su poder predictivo de manera consistente a  través  de  diferentes  períodos  temporales,  sin  exhibir  degradación  significativa  en condiciones de mercado cambiantes. El fold 2 mostró el mejor desempeño con ROC-AUC de 0.5640 y F1-score de 0.5202, sugiriendo que este período particular contenía patrones más pronunciados o menos ruidosos que facilitaron la clasificación. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.033.png)
+
+En contraste, el fold 5 (más reciente) mostró un ligero descenso en recall (0.4581 vs promedio de 0.4581), aunque mantuvo accuracy y ROC-AUC competitivos. Esta pequeña degradación podría indicar cambios graduales en la microestructura del mercado o en el comportamiento  de  los  gaps  overnight  durante  el  período  más  reciente,  un  fenómeno conocido en finanzas como "concept drift". Sin embargo, la magnitud de esta variación está dentro  del  rango  esperado  de  fluctuación  estadística  natural,  por  lo  que  no  representa evidencia concluyente de degradación sistemática del modelo. 
+
+Los modelos lineales mostraron patrones de estabilidad temporal similares entre sí. Logistic  Regression  exhibió  ROC-AUC  entre  0.5154  (fold  5)  y  0.5246  (fold  4),  con desviación estándar de 0.0034. SVM-SGD varió entre 0.5117 (fold 5) y 0.5219 (fold 4), con desviación estándar de 0.0032. Esta menor variabilidad comparada con Random Forest sugiere que los modelos lineales son más estables pero menos sensibles a patrones temporales específicos, consistente con su menor capacidad de adaptación a relaciones complejas en los datos. 
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.034.png)
+
+![](Aspose.Words.242f31fe-f742-47d9-9e44-30a0caf1c3d1.035.png)
+
+Un hallazgo interesante es que los tres modelos mostraron su peor desempeño en el fold 5 (más reciente) y su mejor desempeño en el fold 4, sugiriendo que podría existir algún fenómeno sistemático en el período correspondiente al fold 5 que dificulta la predicción. Esto podría  estar  relacionado  con  eventos  de  mercado  específicos  como  períodos  de  alta volatilidad,  crisis  financieras  o  cambios  regulatorios  que  alteraron  temporalmente  la dinámica de los gaps overnight. Un análisis más detallado requeriría examinar las fechas específicas correspondientes a cada fold y correlacionarlas con eventos macroeconómicos históricos. 
+
+7. **Despliegue (Deploy) del Sistema del Proyecto de Aprendizaje Estadístico 7.1.Publicación del Proyecto y del Sistema en GITHUB** 
+1. **Pestaña de Documentación del Proyecto** 
+1. **Pestaña de Código del Sistema** 
+1. **Pestaña de Ejecución y Pruebas del Sistema** 
+
+**7.2.Deploy del APP o Web del Sistema de Predicción, de Clasificación, de Segmentación** 
+
+- **Asociación.** 
+
+<a name="_page42_x82.00_y363.00"></a>**Referencias Bibliograficas** 
 
 Fama, E. (1969). Efficient Capital Markets: A Review of Theory and Empirical Work. *The* 
 
@@ -269,11 +468,11 @@ Mireles Vázquez, I. (2011). Bolsa de Valores "¿Cómo? ¿Por qué? Y ¿Para qu�
 
 *Económico*, 56. 
 
-Reyna, A. (2024). *¿Qué es la bolsa de valores? Una explicación simple*. Retrieved from 
+Reyna, A. (2024). *¿Qué es la bolsa de valores? Una explicación simple*. Obtenido de BBVA: 
 
-BBVA:  https://www.bbva.com/es/salud-financiera/que-es-la-bolsa-de-valores-una- explicacion-simple/ 
+https://www.bbva.com/es/salud-financiera/que-es-la-bolsa-de-valores-una- explicacion-simple/ 
 
 Villanueva Gonzales, A. (2007). Mercados financieros: una aproximación a la Bolsa de 
 
 Valores de Lima. *Contabilidad y Negocios*, 23-33. 
-17 
+45 
