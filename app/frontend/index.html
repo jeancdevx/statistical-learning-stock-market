@@ -1,388 +1,667 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
     <title>NYSE Stock Predictor - Predicción de Gaps Overnight</title>
-    
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.0/dist/chartjs-chart-financial.js"></script>
-    
+
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
-    
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>"
+    />
+
     <style>
-        /* Animaciones personalizadas */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+      /* Animaciones personalizadas */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
         }
-        
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
     </style>
-</head>
-<body class="bg-gray-50 min-h-screen">
-    
+  </head>
+  <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <span class="text-4xl">📈</span>
-                    <div>
-                        <h1 class="text-2xl font-bold">NYSE Stock Predictor</h1>
-                        <p class="text-blue-200 text-sm">Predicción de Gaps Overnight con Machine Learning</p>
-                    </div>
-                </div>
-                <div class="hidden md:flex items-center space-x-4">
-                    <span class="text-sm bg-blue-700 px-3 py-1 rounded-full">Random Forest</span>
-                    <span class="text-sm bg-blue-700 px-3 py-1 rounded-full">10.4M registros</span>
-                </div>
+    <header
+      class="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg"
+    >
+      <div class="container mx-auto px-4 py-6">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <span class="text-4xl">📈</span>
+            <div>
+              <h1 class="text-2xl font-bold">NYSE Stock Predictor</h1>
+              <p class="text-blue-200 text-sm">
+                Predicción de Gaps Overnight con Machine Learning
+              </p>
             </div>
+          </div>
+          <div class="hidden md:flex items-center space-x-4">
+            <span class="text-sm bg-blue-700 px-3 py-1 rounded-full"
+              >Random Forest</span
+            >
+            <span class="text-sm bg-blue-700 px-3 py-1 rounded-full"
+              >10.4M registros</span
+            >
+          </div>
         </div>
+      </div>
     </header>
 
     <!-- Main Container -->
     <main class="container mx-auto px-4 py-8 max-w-7xl">
-        
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="statsCards">
-            <div class="bg-white rounded-lg shadow-md p-6 fade-in">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Tickers Disponibles</p>
-                        <p class="text-3xl font-bold text-blue-600" id="totalTickers">-</p>
-                    </div>
-                    <div class="bg-blue-100 p-3 rounded-full">
-                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
-                        </svg>
-                    </div>
-                </div>
+      <!-- Stats Cards -->
+      <div
+        class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+        id="statsCards"
+      >
+        <div class="bg-white rounded-lg shadow-md p-6 fade-in">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm font-medium">
+                Tickers Disponibles
+              </p>
+              <p
+                class="text-3xl font-bold text-blue-600"
+                id="totalTickers"
+              >
+                -
+              </p>
             </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 fade-in" style="animation-delay: 0.1s">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Modelos Disponibles</p>
-                        <p class="text-3xl font-bold text-green-600" id="totalModels">3</p>
-                    </div>
-                    <div class="bg-green-100 p-3 rounded-full">
-                        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
-                        </svg>
-                    </div>
-                </div>
+            <div class="bg-blue-100 p-3 rounded-full">
+              <svg
+                class="w-8 h-8 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                ></path>
+              </svg>
             </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 fade-in" style="animation-delay: 0.2s">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Estado del Sistema</p>
-                        <p class="text-3xl font-bold text-purple-600">
-                            <span id="systemStatus">🟢</span> Online
-                        </p>
-                    </div>
-                    <div class="bg-purple-100 p-3 rounded-full">
-                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
 
-        <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- Left Panel - Prediction Form -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
-                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                        </svg>
-                        Nueva Predicción
-                    </h2>
-                    
-                    <form id="predictionForm" class="space-y-4">
-                        
-                        <!-- Ticker Selection -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Ticker
-                                <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <input 
-                                    type="text" 
-                                    id="tickerInput" 
-                                    placeholder="Ej: AAPL, MSFT, TSLA..."
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
-                                    autocomplete="off"
-                                    required
-                                >
-                                <div id="tickerSuggestions" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto hidden shadow-lg"></div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Escribe para buscar entre 2,872 tickers</p>
-                        </div>
-                        
-                        <!-- Date Selection -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Fecha de Predicción
-                                <span class="text-red-500">*</span>
-                            </label>
-                            <input 
-                                type="date" 
-                                id="dateInput" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                disabled
-                                required
-                            >
-                            <p class="text-xs text-gray-500 mt-1" id="dateRange">Selecciona un ticker primero</p>
-                            <div id="dateWarning" class="hidden mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800"></div>
-                        </div>
-                        
-                        <!-- Model Selection -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Modelo de Predicción
-                            </label>
-                            <select 
-                                id="modelSelect" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="rf">Random Forest (Recomendado)</option>
-                                <option value="logreg">Regresión Logística</option>
-                                <option value="svm">SVM-SGD</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Backtest Mode -->
-                        <div class="flex items-center space-x-2">
-                            <input 
-                                type="checkbox" 
-                                id="backtestMode" 
-                                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            >
-                            <label for="backtestMode" class="text-sm text-gray-700">
-                                Modo Backtest (comparar con datos reales)
-                            </label>
-                        </div>
-                        
-                        <!-- Submit Button -->
-                        <button 
-                            type="button" 
-                            id="predictBtn"
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center space-x-2 shadow-md"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                            <span>Predecir</span>
-                        </button>
-                    </form>
-                    
-                    <!-- Loading State -->
-                    <div id="loadingState" class="hidden mt-4 text-center">
-                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                        <p class="text-sm text-gray-600 mt-2">Generando predicción...</p>
-                    </div>
-                    
-                </div>
+        <div
+          class="bg-white rounded-lg shadow-md p-6 fade-in"
+          style="animation-delay: 0.1s"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm font-medium">
+                Modelos Disponibles
+              </p>
+              <p
+                class="text-3xl font-bold text-green-600"
+                id="totalModels"
+              >
+                3
+              </p>
             </div>
-            
-            <!-- Right Panel - Results -->
-            <div class="lg:col-span-2">
-                
-                <!-- Welcome Message (shown initially) -->
-                <div id="welcomeMessage" class="bg-white rounded-lg shadow-md p-12 text-center">
-                    <div class="text-6xl mb-4">🎯</div>
-                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Bienvenido al Predictor NYSE</h3>
-                    <p class="text-gray-600 mb-6">
-                        Selecciona un ticker y fecha para comenzar a predecir la dirección del gap overnight.
-                    </p>
-                    <div class="bg-blue-50 rounded-lg p-6 text-left max-w-2xl mx-auto">
-                        <h4 class="font-semibold text-blue-900 mb-2">¿Qué predecimos?</h4>
-                        <p class="text-sm text-blue-800 mb-3">
-                            Predicción binaria del gap overnight: <strong>¿Open<sub>t+1</sub> > Close<sub>t</sub>?</strong>
-                        </p>
-                        <ul class="text-sm text-blue-800 space-y-1">
-                            <li>✅ <strong>Clase 1:</strong> El precio de apertura será mayor (gap positivo)</li>
-                            <li>❌ <strong>Clase 0:</strong> El precio de apertura será menor o igual</li>
-                        </ul>
-                    </div>
-                </div>
-                
-                <!-- Ticker Info (hidden initially) -->
-                <div id="tickerInfo" class="hidden mb-6"></div>
-                
-                <!-- Price History Chart (hidden initially) -->
-                <div id="priceHistoryContainer" class="hidden bg-white rounded-lg shadow-md p-6 mb-6">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
-                        </svg>
-                        Histórico de Precios - Trading View
-                    </h3>
-                    <div class="flex justify-end space-x-2 mb-4">
-                        <button onclick="window.stockApp.changeTimeRange('1M')" class="px-3 py-1 text-sm rounded hover:bg-blue-50">1M</button>
-                        <button onclick="window.stockApp.changeTimeRange('3M')" class="px-3 py-1 text-sm rounded hover:bg-blue-50">3M</button>
-                        <button onclick="window.stockApp.changeTimeRange('6M')" class="px-3 py-1 text-sm rounded hover:bg-blue-50">6M</button>
-                        <button onclick="window.stockApp.changeTimeRange('1Y')" class="px-3 py-1 text-sm rounded hover:bg-blue-50">1A</button>
-                        <button onclick="window.stockApp.changeTimeRange('ALL')" class="px-3 py-1 text-sm rounded bg-blue-100 font-semibold">Todo</button>
-                    </div>
-                    <div style="height: 400px;">
-                        <canvas id="priceHistoryChart"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Results Container (hidden initially) -->
-                <div id="resultsPanel" class="hidden space-y-6">
-                    
-                    <!-- Additional Metrics -->
-                    <div id="additionalMetrics" class="hidden bg-white rounded-lg shadow-md p-6"></div>
-                    
-                    <!-- Prediction Result Card -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Resultado de la Predicción
-                        </h3>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Prediction -->
-                            <div id="predictionCard" class="text-center p-6 rounded-lg bg-gray-50">
-                            </div>
-                            
-                            <!-- Probability -->
-                            <div class="text-center p-6 bg-gray-50 rounded-lg">
-                                <p class="text-sm text-gray-600 mb-2">Probabilidad</p>
-                                <p class="text-3xl font-bold text-blue-600" id="probabilityValue">0.0%</p>
-                                <div class="w-full bg-gray-200 rounded-full h-3 mt-3">
-                                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" id="probabilityBar" style="width: 0%"></div>
-                                </div>
-                                <div class="mt-3">
-                                    <p class="text-xs text-gray-500">Confianza: <span id="confidenceLevel" class="font-semibold">-</span></p>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Date Info -->
-                        <div id="dateInfo" class="mt-4 text-center"></div>
-                        
-                        <!-- Backtest Comparison (shown only in backtest mode) -->
-                        <div id="backtestCard" class="hidden mt-6 pt-6 border-t">
-                            <h4 class="font-semibold text-gray-800 mb-3">Comparación con Datos Reales</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="bg-blue-50 p-4 rounded-lg text-center">
-                                    <p class="text-xs text-gray-600 font-medium mb-2">Dirección Real</p>
-                                    <p class="text-lg font-bold" id="realDirection">-</p>
-                                </div>
-                                <div class="bg-green-50 p-4 rounded-lg text-center">
-                                    <p class="text-xs text-gray-600 font-medium mb-2">Cambio Real</p>
-                                    <p class="text-lg font-bold" id="realChange">-</p>
-                                </div>
-                                <div class="bg-gray-50 p-4 rounded-lg text-center">
-                                    <p class="text-xs text-gray-600 font-medium mb-2">Validación</p>
-                                    <p class="text-lg font-bold" id="validationResult">-</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Technical Indicators Chart -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
-                            <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            Indicadores Técnicos
-                        </h3>
-                        <div style="height: 300px;">
-                            <canvas id="indicatorsChart"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Price Information -->
-                    <div class="bg-white rounded-lg shadow-md p-6">
-                        <h3 class="text-xl font-bold text-gray-800 mb-2 flex items-center">
-                            <svg class="w-6 h-6 mr-2 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Precios del Día Seleccionado
-                        </h3>
-                        <p class="text-xs text-gray-500 mb-4 ml-8">Movimiento de precios DURANTE el día (no incluye el gap overnight)</p>
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="priceInfo">
-                            <div class="text-center p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs text-gray-600 mb-1">Open</p>
-                                <p class="text-lg font-bold text-gray-800" id="openPrice">-</p>
-                            </div>
-                            <div class="text-center p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs text-gray-600 mb-1">High</p>
-                                <p class="text-lg font-bold text-gray-800" id="highPrice">-</p>
-                            </div>
-                            <div class="text-center p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs text-gray-600 mb-1">Low</p>
-                                <p class="text-lg font-bold text-gray-800" id="lowPrice">-</p>
-                            </div>
-                            <div class="text-center p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs text-gray-600 mb-1">Close</p>
-                                <p class="text-lg font-bold text-gray-800" id="closePrice">-</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                </div>
-                
+            <div class="bg-green-100 p-3 rounded-full">
+              <svg
+                class="w-8 h-8 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"
+                ></path>
+              </svg>
             </div>
-            
+          </div>
         </div>
-        
+
+        <div
+          class="bg-white rounded-lg shadow-md p-6 fade-in"
+          style="animation-delay: 0.2s"
+        >
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-gray-500 text-sm font-medium">
+                Estado del Sistema
+              </p>
+              <p class="text-3xl font-bold text-purple-600">
+                <span id="systemStatus">🟢</span> Online
+              </p>
+            </div>
+            <div class="bg-purple-100 p-3 rounded-full">
+              <svg
+                class="w-8 h-8 text-purple-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 12h14M12 5l7 7-7 7"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Panel - Prediction Form -->
+        <div class="lg:col-span-1">
+          <div class="bg-white rounded-lg shadow-md p-6 sticky top-4">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+              <svg
+                class="w-6 h-6 mr-2 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                ></path>
+              </svg>
+              Nueva Predicción
+            </h2>
+
+            <form
+              id="predictionForm"
+              class="space-y-4"
+            >
+              <!-- Ticker Selection -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Ticker
+                  <span class="text-red-500">*</span>
+                </label>
+                <div class="relative">
+                  <input
+                    type="text"
+                    id="tickerInput"
+                    placeholder="Ej: AAPL, MSFT, TSLA..."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                    autocomplete="off"
+                    required
+                  />
+                  <div
+                    id="tickerSuggestions"
+                    class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-48 overflow-y-auto hidden shadow-lg"
+                  ></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">
+                  Escribe para buscar entre 2,872 tickers
+                </p>
+              </div>
+
+              <!-- Date Selection -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Fecha de Predicción
+                  <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  id="dateInput"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled
+                  required
+                />
+                <p
+                  class="text-xs text-gray-500 mt-1"
+                  id="dateRange"
+                >
+                  Selecciona un ticker primero
+                </p>
+                <div
+                  id="dateWarning"
+                  class="hidden mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800"
+                ></div>
+              </div>
+
+              <!-- Model Selection -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  Modelo de Predicción
+                </label>
+                <select
+                  id="modelSelect"
+                  class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="rf">Random Forest (Recomendado)</option>
+                  <option value="logreg">Regresión Logística</option>
+                  <option value="svm">SVM-SGD</option>
+                </select>
+              </div>
+
+              <!-- Backtest Mode -->
+              <div class="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="backtestMode"
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  for="backtestMode"
+                  class="text-sm text-gray-700"
+                >
+                  Modo Backtest (comparar con datos reales)
+                </label>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="button"
+                id="predictBtn"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 flex items-center justify-center space-x-2 shadow-md"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  ></path>
+                </svg>
+                <span>Predecir</span>
+              </button>
+            </form>
+
+            <!-- Loading State -->
+            <div
+              id="loadingState"
+              class="hidden mt-4 text-center"
+            >
+              <div
+                class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"
+              ></div>
+              <p class="text-sm text-gray-600 mt-2">Generando predicción...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel - Results -->
+        <div class="lg:col-span-2">
+          <!-- Welcome Message (shown initially) -->
+          <div
+            id="welcomeMessage"
+            class="bg-white rounded-lg shadow-md p-12 text-center"
+          >
+            <div class="text-6xl mb-4">🎯</div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-4">
+              Bienvenido al Predictor NYSE
+            </h3>
+            <p class="text-gray-600 mb-6">
+              Selecciona un ticker y fecha para comenzar a predecir la dirección
+              del gap overnight.
+            </p>
+            <div class="bg-blue-50 rounded-lg p-6 text-left max-w-2xl mx-auto">
+              <h4 class="font-semibold text-blue-900 mb-2">¿Qué predecimos?</h4>
+              <p class="text-sm text-blue-800 mb-3">
+                Predicción binaria del gap overnight:
+                <strong>¿Open<sub>t+1</sub> > Close<sub>t</sub>?</strong>
+              </p>
+              <ul class="text-sm text-blue-800 space-y-1">
+                <li>
+                  ✅ <strong>Clase 1:</strong> El precio de apertura será mayor
+                  (gap positivo)
+                </li>
+                <li>
+                  ❌ <strong>Clase 0:</strong> El precio de apertura será menor
+                  o igual
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Ticker Info (hidden initially) -->
+          <div
+            id="tickerInfo"
+            class="hidden mb-6"
+          ></div>
+
+          <!-- Price History Chart (hidden initially) -->
+          <div
+            id="priceHistoryContainer"
+            class="hidden bg-white rounded-lg shadow-md p-6 mb-6"
+          >
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+              <svg
+                class="w-6 h-6 mr-2 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+                ></path>
+              </svg>
+              Histórico de Precios - Trading View
+            </h3>
+            <div class="flex justify-end space-x-2 mb-4">
+              <button
+                onclick="window.stockApp.changeTimeRange('1M')"
+                class="px-3 py-1 text-sm rounded hover:bg-blue-50"
+              >
+                1M
+              </button>
+              <button
+                onclick="window.stockApp.changeTimeRange('3M')"
+                class="px-3 py-1 text-sm rounded hover:bg-blue-50"
+              >
+                3M
+              </button>
+              <button
+                onclick="window.stockApp.changeTimeRange('6M')"
+                class="px-3 py-1 text-sm rounded hover:bg-blue-50"
+              >
+                6M
+              </button>
+              <button
+                onclick="window.stockApp.changeTimeRange('1Y')"
+                class="px-3 py-1 text-sm rounded hover:bg-blue-50"
+              >
+                1A
+              </button>
+              <button
+                onclick="window.stockApp.changeTimeRange('ALL')"
+                class="px-3 py-1 text-sm rounded bg-blue-100 font-semibold"
+              >
+                Todo
+              </button>
+            </div>
+            <div style="height: 400px">
+              <canvas id="priceHistoryChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Results Container (hidden initially) -->
+          <div
+            id="resultsPanel"
+            class="hidden space-y-6"
+          >
+            <!-- Additional Metrics -->
+            <div
+              id="additionalMetrics"
+              class="hidden bg-white rounded-lg shadow-md p-6"
+            ></div>
+
+            <!-- Prediction Result Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+              <h3
+                class="text-xl font-bold text-gray-800 mb-4 flex items-center"
+              >
+                <svg
+                  class="w-6 h-6 mr-2 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+                Resultado de la Predicción
+              </h3>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Prediction -->
+                <div
+                  id="predictionCard"
+                  class="text-center p-6 rounded-lg bg-gray-50"
+                ></div>
+
+                <!-- Probability -->
+                <div class="text-center p-6 bg-gray-50 rounded-lg">
+                  <p class="text-sm text-gray-600 mb-2">Probabilidad</p>
+                  <p
+                    class="text-3xl font-bold text-blue-600"
+                    id="probabilityValue"
+                  >
+                    0.0%
+                  </p>
+                  <div class="w-full bg-gray-200 rounded-full h-3 mt-3">
+                    <div
+                      class="bg-blue-600 h-3 rounded-full transition-all duration-500"
+                      id="probabilityBar"
+                      style="width: 0%"
+                    ></div>
+                  </div>
+                  <div class="mt-3">
+                    <p class="text-xs text-gray-500">
+                      Confianza:
+                      <span
+                        id="confidenceLevel"
+                        class="font-semibold"
+                        >-</span
+                      >
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Date Info -->
+              <div
+                id="dateInfo"
+                class="mt-4 text-center"
+              ></div>
+
+              <!-- Backtest Comparison (shown only in backtest mode) -->
+              <div
+                id="backtestCard"
+                class="hidden mt-6 pt-6 border-t"
+              >
+                <h4 class="font-semibold text-gray-800 mb-3">
+                  Comparación con Datos Reales
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <p class="text-xs text-gray-600 font-medium mb-2">
+                      Dirección Real
+                    </p>
+                    <p
+                      class="text-lg font-bold"
+                      id="realDirection"
+                    >
+                      -
+                    </p>
+                  </div>
+                  <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <p class="text-xs text-gray-600 font-medium mb-2">
+                      Cambio Real
+                    </p>
+                    <p
+                      class="text-lg font-bold"
+                      id="realChange"
+                    >
+                      -
+                    </p>
+                  </div>
+                  <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <p class="text-xs text-gray-600 font-medium mb-2">
+                      Validación
+                    </p>
+                    <p
+                      class="text-lg font-bold"
+                      id="validationResult"
+                    >
+                      -
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Technical Indicators Chart -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+              <h3
+                class="text-xl font-bold text-gray-800 mb-4 flex items-center"
+              >
+                <svg
+                  class="w-6 h-6 mr-2 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  ></path>
+                </svg>
+                Indicadores Técnicos
+              </h3>
+              <div style="height: 300px">
+                <canvas id="indicatorsChart"></canvas>
+              </div>
+            </div>
+
+            <!-- Price Information -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+              <h3
+                class="text-xl font-bold text-gray-800 mb-2 flex items-center"
+              >
+                <svg
+                  class="w-6 h-6 mr-2 text-orange-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+                Precios del Día Seleccionado
+              </h3>
+              <p class="text-xs text-gray-500 mb-4 ml-8">
+                Movimiento de precios DURANTE el día (no incluye el gap
+                overnight)
+              </p>
+              <div
+                class="grid grid-cols-2 md:grid-cols-4 gap-4"
+                id="priceInfo"
+              >
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                  <p class="text-xs text-gray-600 mb-1">Open</p>
+                  <p
+                    class="text-lg font-bold text-gray-800"
+                    id="openPrice"
+                  >
+                    -
+                  </p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                  <p class="text-xs text-gray-600 mb-1">High</p>
+                  <p
+                    class="text-lg font-bold text-gray-800"
+                    id="highPrice"
+                  >
+                    -
+                  </p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                  <p class="text-xs text-gray-600 mb-1">Low</p>
+                  <p
+                    class="text-lg font-bold text-gray-800"
+                    id="lowPrice"
+                  >
+                    -
+                  </p>
+                </div>
+                <div class="text-center p-4 bg-gray-50 rounded-lg">
+                  <p class="text-xs text-gray-600 mb-1">Close</p>
+                  <p
+                    class="text-lg font-bold text-gray-800"
+                    id="closePrice"
+                  >
+                    -
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
-    
+
     <!-- Footer -->
     <footer class="bg-gray-800 text-white mt-12">
-        <div class="container mx-auto px-4 py-6 text-center">
-            <p class="text-sm">
-                NYSE Stock Predictor - Proyecto Académico de Aprendizaje Estadístico
-            </p>
-            <p class="text-xs text-gray-400 mt-2">
-                Universidad Privada Antenor Orrego | 2025
-            </p>
-        </div>
+      <div class="container mx-auto px-4 py-6 text-center">
+        <p class="text-sm">
+          NYSE Stock Predictor - Proyecto Académico de Aprendizaje Estadístico
+        </p>
+        <p class="text-xs text-gray-400 mt-2">
+          Universidad Privada Antenor Orrego | 2025
+        </p>
+      </div>
     </footer>
-    
+
     <!-- JavaScript Modules -->
-    <script type="module" src="/js/main.js"></script>
-    
-</body>
+    <script
+      type="module"
+      src="/js/main.js"
+    ></script>
+  </body>
 </html>
